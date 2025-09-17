@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "pokeapi": {
+      "command": "/Users/guillaumegay/Documents/Projects/fieldflow/.venv/bin/fieldflow-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "cwd": "/Users/guillaumegay/Documents/Projects/fieldflow",
+      "env": {
+        "FIELD_FLOW_OPENAPI_SPEC_PATH": "/Users/guillaumegay/Documents/Projects/fieldflow/examples/pokeapi_openapi.yaml"
+      }
+    }
+  }
+}

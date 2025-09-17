@@ -1,6 +1,9 @@
 LICENSE
 README.md
 pyproject.toml
+claude_config_example/claude_desktop_config.json
+examples/jsonplaceholder_openapi.yaml
+examples/pokeapi_openapi.yaml
 fieldflow/__init__.py
 fieldflow/cli.py
 fieldflow/config.py
@@ -19,5 +22,6 @@ fieldflow.egg-info/top_level.txt
 fieldflow_mcp/__init__.py
 fieldflow_mcp/cli.py
 fieldflow_mcp/server.py
+tests/conftest.py
 tests/test_app.py
 tests/test_mcp.py

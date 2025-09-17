@@ -15,8 +15,8 @@ class Settings:
 
     @staticmethod
     def load() -> Settings:
-        spec_path = os.getenv("FIELD_FLOW_OPENAPI_SPEC_PATH", "examples/jsonplaceholder_openapi.yaml")
-        base_url = os.getenv("FIELD_FLOW_TARGET_API_BASE_URL")
+        spec_path = os.getenv("FIELD_FLOW_OPENAPI_SPEC_PATH") or os.getenv("MCP_PROXY_OPENAPI_SPEC_PATH") or "examples/jsonplaceholder_openapi.yaml"
+        base_url = os.getenv("FIELD_FLOW_TARGET_API_BASE_URL") or os.getenv("MCP_PROXY_TARGET_API_BASE_URL")
         path = Path(spec_path).expanduser().resolve()
         return Settings(openapi_spec_path=path, target_api_base_url=base_url)
 

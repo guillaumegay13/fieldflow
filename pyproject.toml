@@ -53,3 +53,4 @@ include = ["fieldflow*", "fieldflow_mcp*"]
 [project.scripts]
 fieldflow = "fieldflow.cli:main"
 fieldflow-mcp = "fieldflow_mcp.cli:main"
+mcp-proxy = "fieldflow_mcp.cli:legacy_entrypoint"

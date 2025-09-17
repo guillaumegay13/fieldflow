@@ -124,8 +124,8 @@ pytest
 To connect the server to Claude Desktop:
 
 1. Install with the MCP extra (`pip install -e '.[mcp]'`).
-2. Launch the stdio server: `fieldflow-mcp`.
-3. In `claude_desktop_config.json`, add an entry under `mcpServers` pointing to the `fieldflow-mcp` command (or configure it via the Developer tab).
+2. Launch the stdio server: `fieldflow-mcp` (or the compatibility alias `mcp-proxy serve-mcp`).
+3. In `claude_desktop_config.json`, add an entry under `mcpServers` pointing to your chosen command (see `claude_config_example/claude_desktop_config.json`).
 4. Claude will automatically list the generated tools and can invoke them during chats.
 
 ## Contributing
