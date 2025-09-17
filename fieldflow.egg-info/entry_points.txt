@@ -1,0 +1,3 @@
+[console_scripts]
+fieldflow = fieldflow.cli:main
+fieldflow-mcp = fieldflow_mcp.cli:main

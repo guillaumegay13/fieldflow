@@ -1,0 +1,95 @@
+openapi: 3.0.0
+info:
+  title: JSONPlaceholder API Proxy
+  version: "1.0.0"
+servers:
+  - url: https://jsonplaceholder.typicode.com
+paths:
+  /users/{user_id}:
+    get:
+      summary: Fetch user information
+      operationId: get_user_info
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  website:
+                    type: string
+                  company:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      catchPhrase:
+                        type: string
+                      bs:
+                        type: string
+                  address:
+                    type: object
+                    properties:
+                      street:
+                        type: string
+                      suite:
+                        type: string
+                      city:
+                        type: string
+                      zipcode:
+                        type: string
+                      geo:
+                        type: object
+                        properties:
+                          lat:
+                            type: string
+                          lng:
+                            type: string
+  /posts:
+    get:
+      summary: List posts
+      operationId: list_posts
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: integer
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    body:
+                      type: string
