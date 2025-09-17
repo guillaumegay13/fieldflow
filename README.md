@@ -29,42 +29,6 @@ examples/
   pokeapi_openapi.yaml          # Larger spec for stress-testing
 ```
 
-## Architecture
-
-```mermaid
-flowchart TD
-  A[OpenAPI Spec (YAML/JSON)] --> B[openapi_loader.load_spec]
-  B --> C[spec_parser: schemas, operations]
-  C --> D[tooling: build_request_model/build_router]
-  D --> E[FastAPI App (http_app.create_fastapi_app)]
-  E --> F[/Generated /tools/{operation} routes/]
-
-  %% Request path
-  subgraph HTTP Path
-    F --> G[proxy.APIProxy]
-    G --> H[(Upstream REST API)]
-    H --> G
-    G --> I[Field Selector (fields param)]
-    I --> J[Filtered JSON Response]
-  end
-
-  %% Optional MCP path
-  C --> M[fieldflow_mcp.server: tool registry]
-  M --> N[FastMCP Server (stdio)]
-  N --> O[Claude Desktop / MCP Client]
-
-  classDef core fill:#eef,stroke:#88a,stroke-width:1px;
-  classDef io fill:#efe,stroke:#8a8,stroke-width:1px;
-  class B,C,D,E,F,G,I,J core;
-  class A,H,O io;
-  class M,N io;
-```
-
-Key points:
-- The FastAPI service is generated from the spec at startup; each operation becomes a `/tools/{operation}` route.
-- Calls are proxied to the upstream API; responses are sliced to only requested `fields`.
-- The MCP server (optional) exposes the same operations as tools over stdio for MCP clients.
-
 ## Quickstart
 
 ```bash
