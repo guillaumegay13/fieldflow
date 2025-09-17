@@ -1,1 +1,4 @@
 ROADMAP.md
+fieldflow.egg-info/
+.pytest_cache/
+app/__pycache__/
