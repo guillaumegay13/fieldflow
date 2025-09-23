@@ -16,7 +16,7 @@ from fieldflow.utils import extract_base_url
 
 INSTRUCTIONS = (
     "Tools in this server are generated dynamically from the supplied OpenAPI specification. "
-    "Provide the required parameters and optionally a list of response fields to retrieve."
+    "Provide the required parameters and include a `fields` list whenever you only need part of the response."
 )
 
 

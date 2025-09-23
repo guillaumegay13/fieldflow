@@ -3,3 +3,7 @@ fieldflow.egg-info/
 .pytest_cache/
 app/__pycache__/
 .venv/
+CLAUDE.md
+.DS_Store
+fieldflow_mcp/__pycache__/
+assets/

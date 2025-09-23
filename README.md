@@ -2,6 +2,8 @@
 
 FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools. It generates Pydantic models and FastAPI routes that forward requests to the upstream API and return only the fields the caller asks for. An optional MCP layer exposes the same functionality to Model Context Protocol clients such as Claude Desktop.
 
+[![Voir la vidéo](https://img.youtube.com/vi/-pgy0FICWpQ/0.jpg)](https://www.youtube.com/watch?v=-pgy0FICWpQ)
+
 ## Features
 - Discovers endpoints and schemas from OpenAPI 3.0 JSON or YAML files.
 - Builds request/response Pydantic models dynamically, preserving aliases and
@@ -124,9 +126,10 @@ pytest
 To connect the server to Claude Desktop:
 
 1. Install with the MCP extra (`pip install -e '.[mcp]'`).
-2. Launch the stdio server: `fieldflow-mcp` (or the compatibility alias `mcp-proxy serve-mcp`).
-3. In `claude_desktop_config.json`, add an entry under `mcpServers` pointing to your chosen command (see `claude_config_example/claude_desktop_config.json`).
-4. Claude will automatically list the generated tools and can invoke them during chats.
+2. Claude Desktop launches configured MCP servers on startup—no need to run `fieldflow-mcp` manually.
+3. Open Claude Desktop → Settings → Developer → Modify Config, then paste a configuration that points to the FieldFlow server (see `claude_config_example/claude_desktop_config.json`).
+4. For additional details, review the Model Context Protocol guide: https://modelcontextprotocol.io/docs/develop/connect-local-servers.
+5. Claude will automatically list the generated tools and can invoke them during chats once the config is saved.
 
 ## Contributing
 
