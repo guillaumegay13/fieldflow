@@ -2,7 +2,7 @@
 
 FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools. It generates Pydantic models and FastAPI routes that forward requests to the upstream API and return only the fields the caller asks for. An optional MCP layer exposes the same functionality to Model Context Protocol clients such as Claude Desktop.
 
-[![Voir la vidéo](https://img.youtube.com/vi/-pgy0FICWpQ/0.jpg)](https://www.youtube.com/watch?v=-pgy0FICWpQ)
+[![Voir la vidéo en HD](https://img.youtube.com/vi/-pgy0FICWpQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=-pgy0FICWpQ)
 
 ## Features
 - Discovers endpoints and schemas from OpenAPI 3.0 JSON or YAML files.
