@@ -7,6 +7,7 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 from pydantic.fields import PydanticUndefined
 
+from fieldflow.auth import EnvironmentAuthProvider, OpenAPISecurityProvider
 from fieldflow.config import settings
 from fieldflow.openapi_loader import load_spec
 from fieldflow.proxy import APIProxy
@@ -35,7 +36,17 @@ def create_mcp_server(
             "The upstream API base URL could not be determined. Provide FIELD_FLOW_TARGET_API_BASE_URL or define a server in the spec."
         )
 
-    proxy = APIProxy(base_url)
+    # Set up authentication providers
+    env_auth_provider = EnvironmentAuthProvider()
+    auth_provider = env_auth_provider
+
+    # If OpenAPI spec has security schemes, use OpenAPISecurityProvider
+    if parser.security_schemes:
+        auth_provider = OpenAPISecurityProvider(
+            parser.security_schemes, env_auth_provider
+        )
+
+    proxy = APIProxy(base_url, auth_provider=auth_provider)
     server = FastMCP(
         name=name or "fieldflow-mcp",
         instructions=instructions or INSTRUCTIONS,
@@ -77,7 +88,9 @@ def _register_operation(
         payload = request_model(**kwargs)
 
         path_params = extract_parameters(payload, param_map["path"])
-        query_params = extract_parameters(payload, param_map["query"], exclude_none=True)
+        query_params = extract_parameters(
+            payload, param_map["query"], exclude_none=True
+        )
         fields_name = param_map["fields"]
         requested_fields = getattr(payload, fields_name)
 
@@ -105,7 +118,9 @@ def _register_operation(
     description = operation.summary or f"{operation.method.upper()} {operation.path}"
     tool_fn.__name__ = f"{operation.name}_tool"
     tool_fn.__doc__ = description
-    tool_fn.__signature__ = inspect.Signature(parameters=parameters, return_annotation=return_annotation)
+    tool_fn.__signature__ = inspect.Signature(
+        parameters=parameters, return_annotation=return_annotation
+    )
 
     server.add_tool(
         tool_fn,

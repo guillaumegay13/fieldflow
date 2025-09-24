@@ -21,7 +21,9 @@ def create_tools_router(
         request_model = build_request_model(operation, schema_factory)
         response_model = operation.response_model or Dict[str, Any]
         endpoint_path = f"/tools/{operation.name}"
-        summary = operation.summary or f"{operation.method.upper()} {operation.path}".strip()
+        summary = (
+            operation.summary or f"{operation.method.upper()} {operation.path}".strip()
+        )
 
         async def endpoint(
             payload: request_model = Body(...),
@@ -30,7 +32,9 @@ def create_tools_router(
         ) -> Any:  # type: ignore[misc]
             param_map = getattr(__request_model, "__mcp_param_map__")
             path_params = extract_parameters(payload, param_map["path"])
-            query_params = extract_parameters(payload, param_map["query"], exclude_none=True)
+            query_params = extract_parameters(
+                payload, param_map["query"], exclude_none=True
+            )
             fields_name = param_map["fields"]
             requested_fields = getattr(payload, fields_name)
 
@@ -44,12 +48,21 @@ def create_tools_router(
                     elif isinstance(body_obj, dict):
                         body_payload = body_obj
                     else:
-                        raise HTTPException(status_code=400, detail="Request body must be an object")
+                        raise HTTPException(
+                            status_code=400, detail="Request body must be an object"
+                        )
 
             path_template = __operation.path
-            missing = [name for name, attr in param_map["path"].items() if getattr(payload, attr) is None]
+            missing = [
+                name
+                for name, attr in param_map["path"].items()
+                if getattr(payload, attr) is None
+            ]
             if missing:
-                raise HTTPException(status_code=422, detail=f"Missing required path parameters: {missing}")
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Missing required path parameters: {missing}",
+                )
 
             return await proxy.execute(
                 operation=__operation,
@@ -74,7 +87,9 @@ def create_tools_router(
     return router
 
 
-def build_request_model(operation: EndpointOperation, schema_factory: SchemaFactory) -> Type[BaseModel]:
+def build_request_model(
+    operation: EndpointOperation, schema_factory: SchemaFactory
+) -> Type[BaseModel]:
     fields: Dict[str, Tuple[Any, Any]] = {}
     used_names: Set[str] = set()
     path_map: Dict[str, str] = {}
@@ -151,7 +166,9 @@ def build_request_model(operation: EndpointOperation, schema_factory: SchemaFact
     return request_model
 
 
-def _parameter_type_and_default(param: Parameter, schema_factory: SchemaFactory) -> Tuple[Any, Any]:
+def _parameter_type_and_default(
+    param: Parameter, schema_factory: SchemaFactory
+) -> Tuple[Any, Any]:
     python_type = schema_factory.type_for_parameter(param)
     has_default = "default" in param.schema
     default_value = param.schema.get("default") if has_default else None
@@ -166,7 +183,9 @@ def _parameter_type_and_default(param: Parameter, schema_factory: SchemaFactory)
 
 
 def _sanitize_name(name: str, used: Set[str]) -> Tuple[str, Optional[str]]:
-    sanitized = "".join(ch if ch.isalnum() or ch == "_" else "_" for ch in name) or "field"
+    sanitized = (
+        "".join(ch if ch.isalnum() or ch == "_" else "_" for ch in name) or "field"
+    )
     if sanitized[0].isdigit():
         sanitized = f"field_{sanitized}"
     candidate = sanitized
@@ -179,7 +198,9 @@ def _sanitize_name(name: str, used: Set[str]) -> Tuple[str, Optional[str]]:
     return candidate, alias
 
 
-def _field_value(default: Any, *, alias: Optional[str] = None, description: Optional[str] = None) -> Any:
+def _field_value(
+    default: Any, *, alias: Optional[str] = None, description: Optional[str] = None
+) -> Any:
     metadata: Dict[str, Any] = {}
     if alias:
         metadata["alias"] = alias

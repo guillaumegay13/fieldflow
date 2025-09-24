@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient as HTTPXAsyncClient
 import pytest
 from fieldflow import proxy as fieldflow_proxy
 from fieldflow.http_app import create_fastapi_app
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE_SPEC = PROJECT_ROOT / "examples" / "jsonplaceholder_openapi.yaml"
 
@@ -24,11 +25,15 @@ class StubAsyncClient:
     async def __aenter__(self) -> "StubAsyncClient":
         return self
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - cleanup has no logic
+    async def __aexit__(
+        self, exc_type, exc, tb
+    ) -> None:  # pragma: no cover - cleanup has no logic
         return None
 
     async def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs, "base_url": self.base_url})
+        self.calls.append(
+            {"method": method, "url": url, "kwargs": kwargs, "base_url": self.base_url}
+        )
         payload = self.queue.pop(0)
         request = httpx.Request(method, f"{self.base_url}{url}")
         return httpx.Response(200, request=request, json=payload)
@@ -65,7 +70,9 @@ async def test_get_user_info_filters_fields(app_instance):
         }
     )
 
-    async with HTTPXAsyncClient(transport=ASGITransport(app=app_instance), base_url="http://testserver") as client:
+    async with HTTPXAsyncClient(
+        transport=ASGITransport(app=app_instance), base_url="http://testserver"
+    ) as client:
         response = await client.post(
             "/tools/get_user_info",
             json={"user_id": 1, "fields": ["name", "email"]},
@@ -89,7 +96,9 @@ async def test_list_posts_preserves_query_params(app_instance):
         ]
     )
 
-    async with HTTPXAsyncClient(transport=ASGITransport(app=app_instance), base_url="http://testserver") as client:
+    async with HTTPXAsyncClient(
+        transport=ASGITransport(app=app_instance), base_url="http://testserver"
+    ) as client:
         response = await client.post(
             "/tools/list_posts",
             json={"userId": 1, "fields": ["id", "title"]},
