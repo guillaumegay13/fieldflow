@@ -29,6 +29,7 @@ class EndpointOperation:
     response_model: Optional[Any] = None
     response_schema: Optional[Dict[str, Any]] = None
     raw_operation: Dict[str, Any] = field(default_factory=dict)
+    security_requirements: List[Dict[str, List[str]]] = field(default_factory=list)
 
 
 class SchemaFactory:
@@ -71,7 +72,9 @@ class SchemaFactory:
 
         return self._schema_to_type(name, schema, force_optional=False)
 
-    def _schema_to_type(self, name: str, schema: Dict[str, Any], force_optional: bool) -> Any:
+    def _schema_to_type(
+        self, name: str, schema: Dict[str, Any], force_optional: bool
+    ) -> Any:
         if "$ref" in schema:
             resolved_schema = self._resolve_ref(schema["$ref"])
             resolved_name = schema["$ref"].split("/")[-1]
@@ -104,7 +107,9 @@ class SchemaFactory:
             return type(None)
         return Any
 
-    def _build_model(self, name: str, schema: Dict[str, Any], force_optional: bool) -> Type[BaseModel]:
+    def _build_model(
+        self, name: str, schema: Dict[str, Any], force_optional: bool
+    ) -> Type[BaseModel]:
         cache_key = name
         if cache_key in self.model_cache:
             return self.model_cache[cache_key]
@@ -115,8 +120,14 @@ class SchemaFactory:
         used_names: Set[str] = set()
         for field_name, field_schema in properties.items():
             nested_name = f"{name}_{field_name}".replace(" ", "_")
-            field_type = self._schema_to_type(nested_name, field_schema, force_optional=False)
-            is_required = field_name in required and not force_optional and not field_schema.get("nullable")
+            field_type = self._schema_to_type(
+                nested_name, field_schema, force_optional=False
+            )
+            is_required = (
+                field_name in required
+                and not force_optional
+                and not field_schema.get("nullable")
+            )
             if not is_required or force_optional:
                 from typing import Optional as TypingOptional
 
@@ -160,10 +171,14 @@ class SchemaFactory:
             sanitized = f"{sanitized}_{self._anonymous_index}"
         return sanitized or f"Model_{self._anonymous_index}"
 
-    def _sanitize_field_name(self, name: str, used: Set[str]) -> Tuple[str, Optional[str]]:
-        sanitized = ''.join(ch if ch.isalnum() or ch == '_' else '_' for ch in name) or 'field'
+    def _sanitize_field_name(
+        self, name: str, used: Set[str]
+    ) -> Tuple[str, Optional[str]]:
+        sanitized = (
+            "".join(ch if ch.isalnum() or ch == "_" else "_" for ch in name) or "field"
+        )
         if sanitized[0].isdigit():
-            sanitized = f'field_{sanitized}'
+            sanitized = f"field_{sanitized}"
         candidate = sanitized
         index = 1
         while candidate in used:
@@ -195,6 +210,9 @@ class OpenAPIParser:
             raise ValueError("OpenAPI spec must define paths")
         self.spec = spec
         self.schema_factory = SchemaFactory(spec)
+        # Parse security schemes if available
+        self.security_schemes = self._parse_security_schemes()
+        self.global_security = spec.get("security", [])
 
     def parse(self) -> List[EndpointOperation]:
         operations: List[EndpointOperation] = []
@@ -210,16 +228,27 @@ class OpenAPIParser:
                 if not isinstance(operation, dict):
                     continue
                 op_name = self._operation_name(method, path, operation)
-                path_params, query_params = self._collect_parameters(common_params, operation.get("parameters", []))
+                path_params, query_params = self._collect_parameters(
+                    common_params, operation.get("parameters", [])
+                )
                 response_schema = self._extract_response_schema(operation)
                 response_model = None
                 if response_schema:
-                    response_model = self.schema_factory.create_response_model(f"{op_name}_response", response_schema)
+                    response_model = self.schema_factory.create_response_model(
+                        f"{op_name}_response", response_schema
+                    )
 
-                request_body_schema, required_body = self._extract_request_body(operation)
+                request_body_schema, required_body = self._extract_request_body(
+                    operation
+                )
                 request_body_model = None
                 if request_body_schema:
-                    request_body_model = self.schema_factory.create_request_model(f"{op_name}_body", request_body_schema)
+                    request_body_model = self.schema_factory.create_request_model(
+                        f"{op_name}_body", request_body_schema
+                    )
+
+                # Get security requirements for this operation
+                security_requirements = operation.get("security", self.global_security)
 
                 operations.append(
                     EndpointOperation(
@@ -234,6 +263,7 @@ class OpenAPIParser:
                         response_model=response_model,
                         response_schema=response_schema,
                         raw_operation=operation,
+                        security_requirements=security_requirements,
                     )
                 )
 
@@ -268,7 +298,9 @@ class OpenAPIParser:
                 query_params.append(parameter)
         return path_params, query_params
 
-    def _extract_response_schema(self, operation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_response_schema(
+        self, operation: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         responses = operation.get("responses")
         if not isinstance(responses, dict):
             return None
@@ -287,7 +319,9 @@ class OpenAPIParser:
                     return schema
         return None
 
-    def _extract_request_body(self, operation: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], bool]:
+    def _extract_request_body(
+        self, operation: Dict[str, Any]
+    ) -> Tuple[Optional[Dict[str, Any]], bool]:
         request_body = operation.get("requestBody")
         if not isinstance(request_body, dict):
             return None, False
@@ -326,3 +360,8 @@ class OpenAPIParser:
         if identifier and identifier[0].isdigit():
             identifier = f"op_{identifier}"
         return identifier or "operation"
+
+    def _parse_security_schemes(self) -> Dict[str, Dict[str, Any]]:
+        """Parse security schemes from the OpenAPI components."""
+        components = self.spec.get("components", {})
+        return components.get("securitySchemes", {})

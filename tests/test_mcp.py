@@ -13,7 +13,9 @@ EXAMPLE_SPEC = PROJECT_ROOT / "examples" / "jsonplaceholder_openapi.yaml"
 
 
 @pytest.mark.asyncio
-async def test_create_mcp_server_registers_tools(monkeypatch: pytest.MonkeyPatch, reload_app_modules):
+async def test_create_mcp_server_registers_tools(
+    monkeypatch: pytest.MonkeyPatch, reload_app_modules
+):
     monkeypatch.setenv("FIELD_FLOW_OPENAPI_SPEC_PATH", str(EXAMPLE_SPEC))
     monkeypatch.delenv("FIELD_FLOW_TARGET_API_BASE_URL", raising=False)
 
@@ -26,6 +28,7 @@ async def test_create_mcp_server_registers_tools(monkeypatch: pytest.MonkeyPatch
     reload_app_modules()
     monkeypatch.setattr(APIProxy, "execute", fake_execute, raising=False)
     import fieldflow.proxy as proxy_module
+
     monkeypatch.setattr(proxy_module.APIProxy, "execute", fake_execute, raising=False)
 
     server = mcp_server.create_mcp_server()

@@ -3,7 +3,20 @@ fieldflow.egg-info/
 .pytest_cache/
 app/__pycache__/
 .venv/
-CLAUDE.md
 .DS_Store
 fieldflow_mcp/__pycache__/
+fieldflow/__pycache__/
+tests/__pycache__/
 assets/
+
+CLAUDE.md
+
+# Test authentication files (do not commit)
+test_api_server.py
+test_auth_openapi.yaml
+test_auth_demo.py
+TEST_AUTH_README.md
+test_auth_*.py
+test_auth_*.yaml
+
+test_local_server/

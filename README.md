@@ -53,6 +53,52 @@ includes a `servers` entry the first URL is used; otherwise set
 | `FIELD_FLOW_OPENAPI_SPEC_PATH` | Path to the OpenAPI JSON/YAML file | `examples/jsonplaceholder_openapi.yaml` |
 | `FIELD_FLOW_TARGET_API_BASE_URL` | Upstream REST API base URL (overrides spec `servers`) | _derived from spec_ |
 
+### Authentication
+
+FieldFlow supports secure API authentication through environment variables. All credentials are handled securely with automatic sanitization in logs and error messages.
+
+#### Simple Authentication
+```bash
+# Bearer token (OAuth 2.0, JWT)
+export FIELDFLOW_AUTH_TYPE=bearer
+export FIELDFLOW_AUTH_VALUE=your-token-here
+
+# API Key
+export FIELDFLOW_AUTH_TYPE=apikey
+export FIELDFLOW_AUTH_HEADER=X-API-Key  # Optional, defaults to X-API-Key
+export FIELDFLOW_AUTH_VALUE=your-api-key-here
+
+# Basic authentication
+export FIELDFLOW_AUTH_TYPE=basic
+export FIELDFLOW_AUTH_VALUE=base64-encoded-credentials
+```
+
+#### OpenAPI Security Schemes
+When your OpenAPI spec defines security schemes, FieldFlow automatically uses them:
+```yaml
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+```
+
+With security schemes, provide credentials using the scheme name:
+```bash
+export FIELDFLOW_AUTH_BEARERAUTH_VALUE=your-bearer-token
+export FIELDFLOW_AUTH_APIKEYAUTH_VALUE=your-api-key
+```
+
+**Security features:**
+- Credentials are never logged or stored
+- Auth headers are sanitized in all error messages
+- Memory-safe handling with immediate credential clearing
+- Environment-only configuration (no hardcoded secrets)
+
 ## Example Tool Calls
 
 ### JSONPlaceholder (default)

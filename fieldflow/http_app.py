@@ -4,6 +4,7 @@ from typing import List
 
 from fastapi import FastAPI
 
+from .auth import EnvironmentAuthProvider, OpenAPISecurityProvider
 from .config import settings
 from .openapi_loader import load_spec
 from .proxy import APIProxy
@@ -23,7 +24,17 @@ def create_fastapi_app() -> FastAPI:
             "The upstream API base URL could not be determined. Provide FIELD_FLOW_TARGET_API_BASE_URL or define a server in the spec."
         )
 
-    proxy = APIProxy(base_url)
+    # Set up authentication providers
+    env_auth_provider = EnvironmentAuthProvider()
+    auth_provider = env_auth_provider
+
+    # If OpenAPI spec has security schemes, use OpenAPISecurityProvider
+    if parser.security_schemes:
+        auth_provider = OpenAPISecurityProvider(
+            parser.security_schemes, env_auth_provider
+        )
+
+    proxy = APIProxy(base_url, auth_provider=auth_provider)
     app = FastAPI(
         title="FieldFlow API",
         description="Expose REST API endpoints as FieldFlow tools generated from an OpenAPI specification.",
