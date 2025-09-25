@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Guillaume Gay", email = "opensource@guillaumegay.com" }
+  { name = "Guillaume Gay", email = "guillaume.gay@protonmail.com" }
 ]
 keywords = ["mcp", "fastapi", "openapi", "proxy", "llm"]
 classifiers = [
