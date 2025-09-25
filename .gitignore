@@ -20,3 +20,8 @@ test_auth_*.py
 test_auth_*.yaml
 
 test_local_server/
+
+/deploy/
+/deploy.py
+/fly.toml
+.dockerignore
