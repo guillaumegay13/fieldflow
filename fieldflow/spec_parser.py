@@ -81,31 +81,56 @@ class SchemaFactory:
             return self._schema_to_type(resolved_name, resolved_schema, force_optional)
 
         schema_type = schema.get("type")
+        nullable = schema.get("nullable", False)
+        multi_type = False
+
+        if isinstance(schema_type, list):
+            type_options = [t for t in schema_type if t != "null"]
+            if "null" in schema_type:
+                nullable = True
+            if len(type_options) == 1:
+                schema_type = type_options[0]
+            elif not type_options:
+                schema_type = None
+            else:
+                multi_type = True
+                schema_type = None
+
         if not schema_type and "properties" in schema:
             schema_type = "object"
+
+        if multi_type:
+            return self._maybe_optional(Any, nullable, force_optional)
+
         if schema_type == "object":
-            return self._build_model(name, schema, force_optional)
+            model = self._build_model(name, schema, force_optional)
+            return self._maybe_optional(model, nullable, force_optional)
+
         if schema_type == "array":
             items = schema.get("items", {})
             item_type = self._schema_to_type(f"{name}Item", items, force_optional=False)
             from typing import List as TypingList
 
-            return TypingList[item_type]
+            list_type = TypingList[item_type]
+            return self._maybe_optional(list_type, nullable, force_optional)
         if schema_type in self.PRIMITIVE_TYPE_MAP:
             python_type = self.PRIMITIVE_TYPE_MAP[schema_type]
             if schema_type == "string":
                 fmt = schema.get("format")
                 python_type = self.STRING_FORMAT_MAP.get(fmt, python_type)
-            if schema.get("nullable") or force_optional:
-                from typing import Optional as TypingOptional
-
-                return TypingOptional[python_type]
-            return python_type
+            return self._maybe_optional(python_type, nullable, force_optional)
         if "enum" in schema:
-            return str
+            return self._maybe_optional(str, nullable, force_optional)
         if schema_type == "null":  # pragma: no cover - rare
             return type(None)
-        return Any
+        return self._maybe_optional(Any, nullable, force_optional)
+
+    def _maybe_optional(self, type_hint: Any, nullable: bool, force_optional: bool) -> Any:
+        if nullable or force_optional:
+            from typing import Optional as TypingOptional
+
+            return TypingOptional[type_hint]
+        return type_hint
 
     def _build_model(
         self, name: str, schema: Dict[str, Any], force_optional: bool
