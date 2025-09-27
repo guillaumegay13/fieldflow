@@ -118,6 +118,23 @@ curl -X POST http://127.0.0.1:8000/tools/list_posts \
   -d '{"userId": 1, "fields": ["id", "title"]}'
 ```
 
+### Nested field selectors
+Request deeply nested data with a JSONPath-lite syntax tailored for LLMs:
+
+- Use dots (`damage_relations.double_damage_from`) to traverse objects.
+- Append `[]` to map over every element in a list (`moves[].move.name`).
+- Mix top-level and nested selectors in the same request; missing branches are skipped.
+
+Example with the PokeAPI spec:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tools/pokemon_read \
+  -H "Content-Type: application/json" \
+  -d '{"id": 150, "fields": ["name", "types[].type.name", "stats.attack.base_stat"]}'
+```
+
+The proxy trims everything except Mewtwo's name, each type name, and the attack stat. Invalid selectors (for example `moves[0].move`) return a 422 error before the upstream API is called.
+
 ### PokeAPI
 Switch to the richer PokeAPI specification:
 
