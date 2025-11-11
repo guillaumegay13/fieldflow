@@ -74,7 +74,26 @@ class APIProxy:
             ) from exc
         if not response.content:
             return {}
-        data = response.json()
+
+        # Parse JSON with explicit error handling
+        content_type = response.headers.get("content-type", "").lower()
+        try:
+            data = response.json()
+        except Exception as exc:
+            # Provide detailed error message when response is not JSON
+            preview = response.text[:200] if len(response.text) > 200 else response.text
+            error_detail = (
+                f"Upstream API returned non-JSON response. "
+                f"Status: {response.status_code}, "
+                f"Content-Type: {content_type or 'not set'}, "
+                f"URL: {url}, "
+                f"Content preview: {preview}"
+            )
+            logger.error(error_detail)
+            raise HTTPException(
+                status_code=502,
+                detail=error_detail
+            ) from exc
         if selector_tree is None:
             return data
         return self._filter_fields(data, selector_tree)
