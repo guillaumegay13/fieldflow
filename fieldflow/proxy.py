@@ -3,11 +3,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException
 
-from .auth import AuthProvider
+from .auth import AuthConfig, AuthProvider
 from .spec_parser import EndpointOperation
 
 logger = logging.getLogger(__name__)
@@ -16,9 +17,16 @@ logger = logging.getLogger(__name__)
 class APIProxy:
     """Proxy requests from the MCP server to the upstream REST API."""
 
-    def __init__(self, base_url: str, auth_provider: Optional[AuthProvider] = None):
+    def __init__(
+        self,
+        base_url: str,
+        auth_provider: Optional[AuthProvider] = None,
+        default_auth_config: Optional[AuthConfig] = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.auth_provider = auth_provider
+        self.default_auth_config = default_auth_config
+        self._client: Optional[httpx.AsyncClient] = None
 
     async def execute(
         self,
@@ -47,19 +55,21 @@ class APIProxy:
 
         # Add authentication headers if available
         if self.auth_provider:
-            auth_headers = self.auth_provider.get_auth_headers(operation)
+            auth_headers = self.auth_provider.get_auth_headers(
+                operation, self.default_auth_config
+            )
             if auth_headers:
                 request_kwargs["headers"] = auth_headers
                 # Log that we're authenticating without exposing credentials
                 sanitized = self.auth_provider.sanitize_headers(auth_headers)
                 logger.debug(f"Adding authentication headers: {sanitized}")
 
-        async with httpx.AsyncClient(base_url=self.base_url) as client:
-            response = await client.request(
-                method,
-                url,
-                **request_kwargs,
-            )
+        client = self._get_client()
+        response = await client.request(
+            method,
+            url,
+            **request_kwargs,
+        )
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:  # pragma: no cover - error handling
@@ -101,7 +111,8 @@ class APIProxy:
     def _build_url(self, template: str, path_params: Dict[str, Any]) -> str:
         url = template
         for key, value in path_params.items():
-            url = url.replace(f"{{{key}}}", str(value))
+            encoded = quote(str(value), safe="")
+            url = url.replace(f"{{{key}}}", encoded)
         return url
 
     def _filter_fields(self, data: Any, selector_tree: "FieldSelectorTree") -> Any:
@@ -113,6 +124,23 @@ class APIProxy:
                 return []
             return None
         return filtered
+
+    def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = httpx.AsyncClient(base_url=self.base_url)
+        return self._client
+
+    async def aclose(self) -> None:
+        client = self._client
+        self._client = None
+        if client is None:
+            return
+        close_method = getattr(client, "aclose", None)
+        if close_method is None:
+            return
+        result = close_method()
+        if hasattr(result, "__await__"):
+            await result
 
 
 class FieldSelectorError(ValueError):

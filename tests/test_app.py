@@ -18,9 +18,11 @@ class StubAsyncClient:
 
     queue: List[Any] = []
     calls: List[Dict[str, Any]] = []
+    init_count: int = 0
 
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip("/")
+        self.__class__.init_count += 1
 
     async def __aenter__(self) -> "StubAsyncClient":
         return self
@@ -43,9 +45,11 @@ class StubAsyncClient:
 def _reset_stub_state():
     StubAsyncClient.queue = []
     StubAsyncClient.calls = []
+    StubAsyncClient.init_count = 0
     yield
     StubAsyncClient.queue = []
     StubAsyncClient.calls = []
+    StubAsyncClient.init_count = 0
 
 
 @pytest.fixture()
@@ -115,3 +119,25 @@ async def test_list_posts_preserves_query_params(app_instance):
     assert call["url"] == "/posts"
     assert call["kwargs"].get("params") == {"userId": 1}
     assert "json" not in call["kwargs"]
+
+
+@pytest.mark.asyncio
+async def test_proxy_reuses_http_client_between_requests(app_instance):
+    StubAsyncClient.queue.append({"id": 1, "name": "Leanne", "email": "a@b.com"})
+    StubAsyncClient.queue.append({"id": 2, "name": "Ervin", "email": "c@d.com"})
+
+    async with HTTPXAsyncClient(
+        transport=ASGITransport(app=app_instance), base_url="http://testserver"
+    ) as client:
+        response_one = await client.post(
+            "/tools/get_user_info",
+            json={"user_id": 1, "fields": ["id"]},
+        )
+        response_two = await client.post(
+            "/tools/get_user_info",
+            json={"user_id": 2, "fields": ["id"]},
+        )
+
+    assert response_one.status_code == 200
+    assert response_two.status_code == 200
+    assert StubAsyncClient.init_count == 1

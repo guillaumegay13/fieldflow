@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 from pydantic.fields import PydanticUndefined
 
-from fieldflow.auth import EnvironmentAuthProvider, OpenAPISecurityProvider
+from fieldflow.auth import AuthProvider, EnvironmentAuthProvider, OpenAPISecurityProvider
 from fieldflow.config import settings
 from fieldflow.openapi_loader import load_spec
 from fieldflow.proxy import APIProxy
@@ -38,7 +38,7 @@ def create_mcp_server(
 
     # Set up authentication providers
     env_auth_provider = EnvironmentAuthProvider()
-    auth_provider = env_auth_provider
+    auth_provider: AuthProvider = env_auth_provider
 
     # If OpenAPI spec has security schemes, use OpenAPISecurityProvider
     if parser.security_schemes:
@@ -46,7 +46,11 @@ def create_mcp_server(
             parser.security_schemes, env_auth_provider
         )
 
-    proxy = APIProxy(base_url, auth_provider=auth_provider)
+    proxy = APIProxy(
+        base_url,
+        auth_provider=auth_provider,
+        default_auth_config=settings.auth_config,
+    )
     server = FastMCP(
         name=name or "fieldflow-mcp",
         instructions=instructions or INSTRUCTIONS,
@@ -118,12 +122,13 @@ def _register_operation(
     description = operation.summary or f"{operation.method.upper()} {operation.path}"
     tool_fn.__name__ = f"{operation.name}_tool"
     tool_fn.__doc__ = description
-    tool_fn.__signature__ = inspect.Signature(
+    callable_tool = cast(Any, tool_fn)
+    callable_tool.__signature__ = inspect.Signature(
         parameters=parameters, return_annotation=return_annotation
     )
 
     server.add_tool(
-        tool_fn,
+        callable_tool,
         name=operation.name,
         title=description,
         description=description,

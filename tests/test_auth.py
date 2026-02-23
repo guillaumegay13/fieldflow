@@ -176,6 +176,61 @@ class TestOpenAPISecurityProvider:
         # Should use API key since bearer token is not available
         assert headers == {"X-API-Key": "test-api-key"}
 
+    def test_single_requirement_with_multiple_schemes_requires_all(
+        self, env_auth_provider, monkeypatch
+    ):
+        monkeypatch.setenv("FIELDFLOW_AUTH_BEARERAUTH_VALUE", "test-token")
+        monkeypatch.setenv("FIELDFLOW_AUTH_APIKEYAUTH_VALUE", "test-api-key")
+        operation = EndpointOperation(
+            name="and_auth_operation",
+            method="get",
+            path="/and",
+            summary="AND auth operation",
+            security_requirements=[{"BearerAuth": [], "ApiKeyAuth": []}],
+        )
+        security_schemes = {
+            "BearerAuth": {"type": "http", "scheme": "bearer"},
+            "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"},
+        }
+        provider = OpenAPISecurityProvider(security_schemes, env_auth_provider)
+        headers = provider.get_auth_headers(operation)
+        assert headers == {
+            "Authorization": "Bearer test-token",
+            "X-API-Key": "test-api-key",
+        }
+
+    def test_single_requirement_with_missing_scheme_fails(
+        self, env_auth_provider, monkeypatch
+    ):
+        monkeypatch.setenv("FIELDFLOW_AUTH_BEARERAUTH_VALUE", "test-token")
+        monkeypatch.delenv("FIELDFLOW_AUTH_APIKEYAUTH_VALUE", raising=False)
+        operation = EndpointOperation(
+            name="and_auth_missing",
+            method="get",
+            path="/and-missing",
+            summary="AND auth missing",
+            security_requirements=[{"BearerAuth": [], "ApiKeyAuth": []}],
+        )
+        security_schemes = {
+            "BearerAuth": {"type": "http", "scheme": "bearer"},
+            "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"},
+        }
+        provider = OpenAPISecurityProvider(security_schemes, env_auth_provider)
+        headers = provider.get_auth_headers(operation)
+        assert headers == {}
+
+    def test_fallback_to_simple_auth_config(
+        self, env_auth_provider, sample_operation, monkeypatch
+    ):
+        monkeypatch.setenv("FIELDFLOW_AUTH_VALUE", "fallback-token")
+        provider = OpenAPISecurityProvider(
+            {"BearerAuth": {"type": "http", "scheme": "bearer"}},
+            env_auth_provider,
+        )
+        fallback = AuthConfig(auth_type="bearer", header_name="Authorization")
+        headers = provider.get_auth_headers(sample_operation, fallback)
+        assert headers == {"Authorization": "Bearer fallback-token"}
+
 
 class TestGetAuthConfigFromEnv:
     def test_no_auth_type(self, monkeypatch):

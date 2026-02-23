@@ -94,3 +94,12 @@ def test_missing_fields_return_empty_structure() -> None:
 def test_invalid_selector_raises() -> None:
     with pytest.raises(FieldSelectorError):
         build_selector_tree(["moves[0].move"])
+
+
+def test_build_url_encodes_path_parameters() -> None:
+    proxy = APIProxy(base_url="https://pokeapi.co")
+    url = proxy._build_url(
+        "/users/{user_id}/repos/{repo}",
+        {"user_id": "alice/bob", "repo": "hello world"},
+    )
+    assert url == "/users/alice%2Fbob/repos/hello%20world"

@@ -26,7 +26,7 @@ def create_tools_router(
         )
 
         async def endpoint(
-            payload: request_model = Body(...),
+            payload: Any = Body(...),
             __operation=operation,
             __request_model=request_model,
         ) -> Any:  # type: ignore[misc]
@@ -151,7 +151,7 @@ def build_request_model(
         __base__=base_model,
         __module__=__name__,
         **fields,
-    )  # type: ignore[arg-type]
+    )  # type: ignore[call-overload]
     setattr(
         request_model,
         "__mcp_param_map__",

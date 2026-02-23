@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in improving the Dynamic MCP REST Proxy! This document outlines how to get a development environment running and how to contribute changes.
+Thanks for your interest in improving FieldFlow. This document outlines how to get a development environment running and how to contribute changes.
 
 ## Getting Started
 
@@ -10,11 +10,7 @@ Thanks for your interest in improving the Dynamic MCP REST Proxy! This document 
    python -m venv .venv
    source .venv/bin/activate
    pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-3. **Install development extras (optional)**. For linting and formatting we suggest:
-   ```bash
-   pip install black ruff mypy
+   pip install -e '.[dev,mcp]'
    ```
 
 ## Development Workflow
@@ -26,7 +22,7 @@ Thanks for your interest in improving the Dynamic MCP REST Proxy! This document 
   fieldflow serve-http --reload
   ```
 - Add or update documentation when behavior changes.
-- If you add complex logic, please include automated tests or describe manual test steps in the pull request.
+- If you add complex logic, include or update automated tests.
 
 ## Coding Standards
 
@@ -34,9 +30,15 @@ Thanks for your interest in improving the Dynamic MCP REST Proxy! This document 
 - Keep comments concise and helpful.
 - Prefer dependency-light solutions; discuss large additions in an issue first.
 
-## Running Tests
+## Checks
 
-Formal tests are not yet included. If you add a test suite, document how to run it here. Meanwhile, please run manual smoke tests against the example specs before submitting a pull request.
+Run checks before opening a pull request:
+
+```bash
+ruff check fieldflow fieldflow_mcp tests
+mypy fieldflow fieldflow_mcp
+pytest
+```
 
 ## Pull Requests
 

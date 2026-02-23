@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, cast
 
 from pydantic import BaseModel, Field, create_model
 
@@ -109,15 +109,14 @@ class SchemaFactory:
         if schema_type == "array":
             items = schema.get("items", {})
             item_type = self._schema_to_type(f"{name}Item", items, force_optional=False)
-            from typing import List as TypingList
-
-            list_type = TypingList[item_type]
+            list_type = list[item_type]  # type: ignore[valid-type]
             return self._maybe_optional(list_type, nullable, force_optional)
         if schema_type in self.PRIMITIVE_TYPE_MAP:
             python_type = self.PRIMITIVE_TYPE_MAP[schema_type]
             if schema_type == "string":
                 fmt = schema.get("format")
-                python_type = self.STRING_FORMAT_MAP.get(fmt, python_type)
+                if isinstance(fmt, str):
+                    python_type = self.STRING_FORMAT_MAP.get(fmt, python_type)
             return self._maybe_optional(python_type, nullable, force_optional)
         if "enum" in schema:
             return self._maybe_optional(str, nullable, force_optional)
@@ -162,7 +161,7 @@ class SchemaFactory:
                 default = ...
             sanitized_name, alias = self._sanitize_field_name(field_name, used_names)
             field_description = field_schema.get("description")
-            metadata = {}
+            metadata: Dict[str, Any] = {}
             if alias:
                 metadata["alias"] = alias
             if field_description:
@@ -180,7 +179,7 @@ class SchemaFactory:
             fields["value"] = (Optional[Any], None)
 
         model_name = self._canonical_model_name(name)
-        model = create_model(model_name, **fields)  # type: ignore[arg-type]
+        model = create_model(model_name, **fields)  # type: ignore[call-overload]
         self.model_cache[cache_key] = model
         return model
 
@@ -300,7 +299,10 @@ class OpenAPIParser:
         all_params = list(common_params) + list(operation_params)
         path_params: List[Parameter] = []
         query_params: List[Parameter] = []
-        for param in all_params:
+        for raw_param in all_params:
+            param = raw_param
+            if isinstance(param, dict) and "$ref" in param:
+                param = self.schema_factory._resolve_ref(param["$ref"])
             if not isinstance(param, dict):
                 continue
             location = param.get("in")
@@ -331,6 +333,8 @@ class OpenAPIParser:
             return None
         for status in ("200", "201", "202", "default"):
             response = responses.get(status)
+            if isinstance(response, dict) and "$ref" in response:
+                response = self.schema_factory._resolve_ref(response["$ref"])
             if not isinstance(response, dict):
                 continue
             content = response.get("content")
@@ -348,6 +352,8 @@ class OpenAPIParser:
         self, operation: Dict[str, Any]
     ) -> Tuple[Optional[Dict[str, Any]], bool]:
         request_body = operation.get("requestBody")
+        if isinstance(request_body, dict) and "$ref" in request_body:
+            request_body = self.schema_factory._resolve_ref(request_body["$ref"])
         if not isinstance(request_body, dict):
             return None, False
         required = bool(request_body.get("required"))
@@ -389,4 +395,7 @@ class OpenAPIParser:
     def _parse_security_schemes(self) -> Dict[str, Dict[str, Any]]:
         """Parse security schemes from the OpenAPI components."""
         components = self.spec.get("components", {})
-        return components.get("securitySchemes", {})
+        schemes = components.get("securitySchemes", {})
+        if not isinstance(schemes, dict):
+            return {}
+        return cast(Dict[str, Dict[str, Any]], schemes)

@@ -107,33 +107,44 @@ class OpenAPISecurityProvider(AuthProvider):
         self, operation: EndpointOperation, auth_config: Optional[AuthConfig] = None
     ) -> Dict[str, str]:
         """Get authentication headers based on OpenAPI security requirements."""
-        if not operation.security_requirements:
-            return {}
+        if operation.security_requirements:
+            # OpenAPI security requirement list is OR, each object is AND.
+            for requirement in operation.security_requirements:
+                headers = self._try_security_requirement(requirement, operation)
+                if headers is not None:
+                    return headers
 
-        # Try each security requirement until we find one with available credentials
-        for requirement in operation.security_requirements:
-            headers = self._try_security_requirement(requirement, operation)
-            if headers:
-                return headers
+        # Fallback for "simple auth" env configuration.
+        if auth_config:
+            return self.env_provider.get_auth_headers(operation, auth_config)
 
         return {}
 
     def _try_security_requirement(
         self, requirement: Dict[str, List[str]], operation: EndpointOperation
-    ) -> Dict[str, str]:
-        """Try to fulfill a single security requirement."""
-        for scheme_name in requirement.keys():
+    ) -> Optional[Dict[str, str]]:
+        """Try to fulfill one OpenAPI security requirement (AND semantics)."""
+        merged_headers: Dict[str, str] = {}
+        for scheme_name in requirement:
             scheme = self.security_schemes.get(scheme_name)
             if not scheme:
-                continue
+                return None
 
             auth_config = self._scheme_to_auth_config(scheme, scheme_name)
-            if auth_config:
-                headers = self.env_provider.get_auth_headers(operation, auth_config)
-                if headers:
-                    return headers
+            if not auth_config:
+                return None
 
-        return {}
+            headers = self.env_provider.get_auth_headers(operation, auth_config)
+            if not headers:
+                return None
+
+            for key, value in headers.items():
+                existing = merged_headers.get(key)
+                if existing is not None and existing != value:
+                    return None
+                merged_headers[key] = value
+
+        return merged_headers
 
     def _scheme_to_auth_config(
         self, scheme: Dict, scheme_name: str

@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - yaml is optional
     yaml = None  # type: ignore
 
