@@ -12,6 +12,8 @@ FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools
   list to slice responses.
 - Proxies requests with `httpx`, automatically formatting URL paths and query
   parameters.
+- Supports a two-step discovery flow (`discover-fields` + `fields`) designed
+  for agent-native semantic field mapping with cached payload reuse.
 - Works with any OpenAPI-compliant spec, including nested schemas and refs.
 
 ## Project Layout
@@ -19,6 +21,7 @@ FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools
 fieldflow/
   config.py          # Environment-based settings
   http_app.py        # FastAPI app factory
+  field_query.py     # Field discovery cache + optional AI query resolver
   openapi_loader.py  # JSON/YAML loader with PyYAML fallback
   proxy.py           # Async HTTP proxy that filters responses to requested fields
   spec_parser.py     # Schema parser and dynamic Pydantic model generator
@@ -26,6 +29,8 @@ fieldflow/
 fieldflow_mcp/
   server.py          # MCP server wrapper built on FastMCP
   cli.py             # CLI entry point for the MCP server
+skills/
+  fieldflow-smart-discovery/  # Agent workflow for discovery + cached field selection
 examples/
   jsonplaceholder_openapi.yaml  # Minimal sample spec
   pokeapi_openapi.yaml          # Larger spec for stress-testing
@@ -52,6 +57,17 @@ includes a `servers` entry the first URL is used; otherwise set
 | --- | --- | --- |
 | `FIELD_FLOW_OPENAPI_SPEC_PATH` | Path to the OpenAPI JSON/YAML file | `examples/jsonplaceholder_openapi.yaml` |
 | `FIELD_FLOW_TARGET_API_BASE_URL` | Upstream REST API base URL (overrides spec `servers`) | _derived from spec_ |
+| `FIELD_FLOW_DISCOVERY_ENABLED` | Enable `discover-fields` cache flow | `true` |
+| `FIELD_FLOW_DISCOVERY_TTL_SECONDS` | Discovery cache TTL (seconds) | `180` |
+| `FIELD_FLOW_DISCOVERY_MAX_ENTRIES` | Max in-memory discovery entries | `256` |
+| `FIELD_FLOW_DISCOVERY_MAX_CANDIDATES` | Max candidate selectors returned by discovery | `400` |
+| `FIELD_FLOW_DISCOVERY_PREVIEW_MAX_CHARS` | Max JSON preview chars returned by discovery | `12000` |
+| `FIELD_FLOW_DISCOVERY_PATH_MAX_DEPTH` | Max traversal depth for candidate extraction | `8` |
+| `FIELD_FLOW_DISCOVERY_LIST_SAMPLE_SIZE` | Max sampled list items during candidate extraction | `10` |
+| `FIELD_FLOW_FIELD_QUERY_ENABLED` | Enable optional AI-backed `field_query` fallback | `false` |
+| `FIELD_FLOW_FIELD_QUERY_MODEL` | Model id for field query resolution | _unset_ |
+| `FIELD_FLOW_FIELD_QUERY_API_KEY` | API key for the model provider (fallback: `OPENAI_API_KEY`) | _unset_ |
+| `FIELD_FLOW_FIELD_QUERY_API_BASE_URL` | OpenAI-compatible API base URL | `https://api.openai.com/v1` |
 
 ### Authentication
 
@@ -135,6 +151,60 @@ curl -X POST http://127.0.0.1:8000/tools/pokemon_read \
 
 The proxy trims everything except Mewtwo's name, each type name, and the attack stat. Invalid selectors (for example `moves[0].move`) return a 422 error before the upstream API is called.
 
+### Agent-native smart discovery (recommended)
+When you do not know exact field names, use the discovery flow:
+
+1. Call `/tools/<operation>/discover-fields` with normal operation params.
+2. Let your agent map the user intent to selectors from returned `candidates`.
+3. Call `/tools/<operation>` with `fields` and the returned `discovery_id`.
+
+Step 1: discover candidates and cache payload:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tools/get_user_info/discover-fields \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1}'
+```
+
+Step 2: request filtered response using cached `discovery_id`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tools/get_user_info \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1, "discovery_id": "DISCOVERY_ID_FROM_STEP_1", "fields": ["email", "id"]}'
+```
+
+Why this flow is agent-friendly:
+- No extra model call required inside FieldFlow.
+- Second call can reuse cached upstream payload (lower latency/cost).
+- Returned fields are still strictly validated by FieldFlow selectors.
+
+### Optional AI fallback (`field_query`)
+If you still want server-side model-based mapping, enable `field_query`:
+
+```bash
+export FIELD_FLOW_FIELD_QUERY_ENABLED=true
+export FIELD_FLOW_FIELD_QUERY_MODEL=gpt-4.1-mini
+export FIELD_FLOW_FIELD_QUERY_API_KEY=your-api-key
+```
+
+Then call an operation with `field_query`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tools/get_user_info \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1, "field_query": "contact details", "field_query_limit": 5}'
+```
+
+Notes:
+- `fields` takes precedence over `field_query` when both are provided.
+- `field_query` is optional and disabled by default.
+- The model can only select from fields present in the real response payload.
+- If model resolution is unavailable or returns no valid fields, FieldFlow returns
+  the full response instead of failing.
+- Inferred selectors follow the same syntax (`.` and `[]`), for example
+  `moves[].move.name`.
+
 ### PokeAPI
 Switch to the richer PokeAPI specification:
 
@@ -193,6 +263,20 @@ To connect the server to Claude Desktop:
 3. Open Claude Desktop → Settings → Developer → Modify Config, then paste a configuration that points to the FieldFlow server (see `claude_config_example/claude_desktop_config.json`).
 4. For additional details, review the Model Context Protocol guide: https://modelcontextprotocol.io/docs/develop/connect-local-servers.
 5. Claude will automatically list the generated tools and can invoke them during chats once the config is saved.
+
+## Agent Skill (Claude Code/OpenClaw/Any MCP Agent)
+
+This repository ships a reusable discovery skill:
+
+- `skills/fieldflow-smart-discovery/SKILL.md`
+
+It standardizes a two-step workflow:
+1. Call `<tool>__discover_fields`.
+2. Call `<tool>` with `fields` + `discovery_id`.
+
+Use it as the behavior template for Claude Code, OpenClaw, or any MCP-capable
+agent to get semantic field selection without extra model calls inside
+FieldFlow.
 
 ## Contributing
 
