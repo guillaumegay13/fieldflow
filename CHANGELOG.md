@@ -6,6 +6,10 @@ The format follows the spirit of Keep a Changelog, and this project uses semanti
 
 ## Unreleased
 
+No unreleased changes yet.
+
+## 0.1.0 - 2026-04-15
+
 ### Added
 
 - Contributor standards for setup, development workflow, checks, pull requests, issue reporting, and security reporting.
