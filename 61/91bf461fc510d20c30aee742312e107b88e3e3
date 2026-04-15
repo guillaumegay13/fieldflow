@@ -1,0 +1,27 @@
+skills/fieldflow-smart-discovery/SKILL.md
+  4a3c5a180fd71f4c 1-35
+skills/fieldflow-smart-discovery/references/agent-instruction-template.md
+  4a3c5a180fd71f4c 1-13
+README.md
+  4a3c5a180fd71f4c 15-16,24,32-33,60-70,154-207,267-279
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "6191bf461fc510d20c30aee742312e107b88e3e3",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 455,
+      "total_deletions": 0,
+      "accepted_lines": 455,
+      "overriden_lines": 0
+    }
+  }
+}
