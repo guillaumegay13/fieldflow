@@ -1,0 +1,39 @@
+tests/test_field_selector.py
+  4a3c5a180fd71f4c 6-11,16,126-222
+fieldflow/http_app.py
+  4a3c5a180fd71f4c 9,42-43
+tests/test_app.py
+  4a3c5a180fd71f4c 9,45-59,82-85,87-97,177-286
+tests/test_mcp.py
+  4a3c5a180fd71f4c 25,28-39,42-44,48-53,58,62,64-66,70-77
+fieldflow/field_query.py
+  4a3c5a180fd71f4c 1-385
+fieldflow/tooling.py
+  4a3c5a180fd71f4c 17,22,25,36-37,41-46,54-74,87-95,102-110,113-124,164-168,170-221,223-224,236,241-274
+fieldflow/config.py
+  4a3c5a180fd71f4c 9,19-20,36-123,129-130
+fieldflow_mcp/server.py
+  4a3c5a180fd71f4c 4,16-19,23-27,32-33,63-64,84-86,93,95,97,99-104,106,113-130,136-137,139-140,150-198
+fieldflow/proxy.py
+  4a3c5a180fd71f4c 12-19,33-34,39-40,51-54,62-89,91-104,106-135,137-148,159-162,172,185-195,197-205,207-239,245-257,387-416
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "d6cc75180f03160ee0bcdfad795bf72fc020aec9",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 1226,
+      "total_deletions": 154,
+      "accepted_lines": 1226,
+      "overriden_lines": 0
+    }
+  }
+}
