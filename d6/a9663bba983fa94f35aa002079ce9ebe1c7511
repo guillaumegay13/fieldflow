@@ -1,0 +1,25 @@
+CHANGELOG.md
+  4a3c5a180fd71f4c 9-12
+AGENTS.md
+  4a3c5a180fd71f4c 6-8,10,13,16,19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "d6a9663bba983fa94f35aa002079ce9ebe1c7511",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 4,
+      "accepted_lines": 363,
+      "overriden_lines": 0
+    }
+  }
+}
