@@ -1,5 +1,7 @@
 ROADMAP.md
 fieldflow.egg-info/
+build/
+dist/
 .pytest_cache/
 app/__pycache__/
 .venv/

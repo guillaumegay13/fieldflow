@@ -1,8 +1,8 @@
 # FieldFlow
 
-FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools. It generates Pydantic models and FastAPI routes that forward requests to the upstream API and return only the fields the caller asks for. An optional MCP layer exposes the same functionality to Model Context Protocol clients such as Claude Desktop.
+FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools. It generates Pydantic models and FastAPI routes that forward requests to the upstream API and return only the fields the caller asks for. An optional MCP layer exposes those generated OpenAPI tools to Model Context Protocol clients such as Claude Desktop.
 
-[![Voir la vidéo en HD](https://img.youtube.com/vi/-pgy0FICWpQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=-pgy0FICWpQ)
+[![Watch the FieldFlow demo](https://img.youtube.com/vi/-pgy0FICWpQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=-pgy0FICWpQ)
 
 ## Features
 - Discovers endpoints and schemas from OpenAPI 3.0 JSON or YAML files.
@@ -13,6 +13,15 @@ FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools
 - Proxies requests with `httpx`, automatically formatting URL paths and query
   parameters.
 - Works with any OpenAPI-compliant spec, including nested schemas and refs.
+
+## What FieldFlow Supports Today
+
+FieldFlow currently has two supported application modes:
+
+1. `fieldflow serve-http` exposes generated HTTP tool endpoints from an OpenAPI spec.
+2. `fieldflow-mcp` exposes the same generated OpenAPI tools through MCP over stdio.
+
+FieldFlow does not yet wrap arbitrary third-party MCP servers. That direction is planned around MCP tools that expose structured `outputSchema`, but it is not part of the current release.
 
 ## Project Layout
 ```
@@ -38,7 +47,6 @@ python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -e '.[mcp]'  # zsh users: quote to avoid globbing
-# Alternatively: pip install -r requirements.txt
 fieldflow serve-http --reload
 ```
 
@@ -177,11 +185,16 @@ fieldflow-mcp
 
 ## Testing
 
-Run the asynchronous test suite with pytest:
+Install the development dependencies and run the same checks used in CI:
 
 ```bash
-pip install -e .[dev]
+pip install -e '.[dev,mcp]'
+ruff check fieldflow fieldflow_mcp tests
+black --check fieldflow fieldflow_mcp tests
+mypy fieldflow fieldflow_mcp
 pytest
+python -m build
+python -m pip check
 ```
 
 ## MCP Integration
@@ -189,8 +202,8 @@ pytest
 To connect the server to Claude Desktop:
 
 1. Install with the MCP extra (`pip install -e '.[mcp]'`).
-2. Claude Desktop launches configured MCP servers on startup—no need to run `fieldflow-mcp` manually.
-3. Open Claude Desktop → Settings → Developer → Modify Config, then paste a configuration that points to the FieldFlow server (see `claude_config_example/claude_desktop_config.json`).
+2. Claude Desktop launches configured MCP servers on startup, so there is no need to run `fieldflow-mcp` manually.
+3. Open Claude Desktop > Settings > Developer > Modify Config, then paste a configuration that points to the FieldFlow server (see `claude_config_example/claude_desktop_config.json`).
 4. For additional details, review the Model Context Protocol guide: https://modelcontextprotocol.io/docs/develop/connect-local-servers.
 5. Claude will automatically list the generated tools and can invoke them during chats once the config is saved.
 
