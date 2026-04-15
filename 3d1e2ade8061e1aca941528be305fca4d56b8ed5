@@ -1,0 +1,23 @@
+pyproject.toml
+  4a3c5a180fd71f4c 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "3d1e2ade8061e1aca941528be305fca4d56b8ed5",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 96,
+      "total_deletions": 302,
+      "accepted_lines": 337,
+      "overriden_lines": 0
+    }
+  }
+}
