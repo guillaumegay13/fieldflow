@@ -1,0 +1,35 @@
+.gitignore
+  4a3c5a180fd71f4c 3-4,29
+CHANGELOG.md
+  4a3c5a180fd71f4c 1-17
+SECURITY.md
+  4a3c5a180fd71f4c 1-35
+pyproject.toml
+  4a3c5a180fd71f4c 11,37
+.github/PULL_REQUEST_TEMPLATE.md
+  4a3c5a180fd71f4c 9-10,16
+README.md
+  4a3c5a180fd71f4c 3,5,17-25,188,191-194,196-197,205-206
+CONTRIBUTING.md
+  4a3c5a180fd71f4c 3,5,7-26,30-34,38-43,47,51,54-55,58-62,64-65,69,71-77,81,83-87,89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "936924bc3b824d53481a7fffa81dcfbab8cad0c4",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 300,
+      "total_deletions": 383,
+      "accepted_lines": 498,
+      "overriden_lines": 0
+    }
+  }
+}
