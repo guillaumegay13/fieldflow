@@ -3,10 +3,17 @@ from __future__ import annotations
 import pytest
 
 from fieldflow import proxy as proxy_module
+from fieldflow.field_query import (
+    DISCOVERY_ERROR_OPERATION_MISMATCH,
+    FieldDiscoveryCache,
+    FieldDiscoveryConfig,
+    extract_candidate_paths,
+)
 from fieldflow.proxy import (
     APIProxy,
     apply_selector_tree,
     build_selector_tree,
+    resolve_field_query,
 )
 
 
@@ -116,3 +123,100 @@ def test_build_url_encodes_path_parameters() -> None:
         {"user_id": "alice/bob", "repo": "hello world"},
     )
     assert url == "/users/alice%2Fbob/repos/hello%20world"
+
+
+def test_extract_candidate_paths_includes_nested_and_list_paths() -> None:
+    data = {
+        "id": 1,
+        "moves": [
+            {"move": {"name": "Thunder Punch", "url": "https://pokeapi.co/move/9/"}}
+        ],
+    }
+    candidates = extract_candidate_paths(data)
+    assert "id" in candidates
+    assert "moves" in candidates
+    assert "moves[]" in candidates
+    assert "moves[].move.name" in candidates
+
+
+class StubResolver:
+    def __init__(self, selected: list[str]):
+        self.selected = selected
+        self.calls: list[tuple[str, int]] = []
+
+    async def resolve(self, data, query: str, *, max_fields: int) -> list[str]:
+        self.calls.append((query, max_fields))
+        return self.selected
+
+    async def aclose(self) -> None:
+        return None
+
+
+@pytest.mark.asyncio
+async def test_resolve_field_query_uses_resolver_and_filters_invalid_fields() -> None:
+    data = {"name": "Leanne Graham", "email": "Sincere@april.biz"}
+    resolver = StubResolver(["email", "unknown", "email"])
+    resolved = await resolve_field_query(
+        data,
+        "mail",
+        max_fields=5,
+        resolver=resolver,
+    )
+    assert resolved == ["email"]
+    assert resolver.calls == [("mail", 5)]
+
+
+@pytest.mark.asyncio
+async def test_resolve_field_query_without_resolver_returns_empty() -> None:
+    data = {"name": "Leanne Graham", "email": "Sincere@april.biz"}
+    resolved = await resolve_field_query(data, "mail", max_fields=5, resolver=None)
+    assert resolved == []
+
+
+@pytest.mark.asyncio
+async def test_field_discovery_cache_create_and_load_round_trip() -> None:
+    cache = FieldDiscoveryCache(
+        FieldDiscoveryConfig(
+            enabled=True,
+            ttl_seconds=120,
+            max_entries=16,
+            max_candidates=32,
+            preview_max_chars=2000,
+            path_max_depth=8,
+            list_sample_size=5,
+        )
+    )
+    data = {"id": 1, "name": "Leanne Graham", "email": "Sincere@april.biz"}
+    discovery = await cache.create(operation_name="get_user_info", data=data)
+    assert "discovery_id" in discovery
+    assert "email" in discovery["candidates"]
+
+    loaded, error = await cache.load(
+        discovery["discovery_id"], operation_name="get_user_info"
+    )
+    assert error is None
+    assert loaded == data
+
+
+@pytest.mark.asyncio
+async def test_field_discovery_cache_rejects_operation_mismatch() -> None:
+    cache = FieldDiscoveryCache(
+        FieldDiscoveryConfig(
+            enabled=True,
+            ttl_seconds=120,
+            max_entries=16,
+            max_candidates=32,
+            preview_max_chars=2000,
+            path_max_depth=8,
+            list_sample_size=5,
+        )
+    )
+    discovery = await cache.create(
+        operation_name="get_user_info",
+        data={"email": "a@b.com"},
+    )
+    loaded, error = await cache.load(
+        discovery["discovery_id"], operation_name="list_posts"
+    )
+    assert loaded is None
+    assert error == DISCOVERY_ERROR_OPERATION_MISMATCH

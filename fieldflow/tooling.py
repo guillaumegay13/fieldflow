@@ -14,13 +14,15 @@ def create_tools_router(
     schema_factory: SchemaFactory,
     proxy: APIProxy,
 ) -> APIRouter:
-    """Create a FastAPI router that exposes MCP tools for each API endpoint."""
+    """Create a FastAPI router that exposes generated operation and discovery endpoints."""
 
     router = APIRouter()
     for operation in operations:
         request_model = build_request_model(operation, schema_factory)
+        discovery_model = build_discovery_request_model(operation, schema_factory)
         response_model = operation.response_model or Dict[str, Any]
         endpoint_path = f"/tools/{operation.name}"
+        discovery_endpoint_path = f"/tools/{operation.name}/discover-fields"
         summary = (
             operation.summary or f"{operation.method.upper()} {operation.path}".strip()
         )
@@ -31,38 +33,17 @@ def create_tools_router(
             __request_model=request_model,
         ) -> Any:  # type: ignore[misc]
             param_map = getattr(__request_model, "__mcp_param_map__")
-            path_params = extract_parameters(payload, param_map["path"])
-            query_params = extract_parameters(
-                payload, param_map["query"], exclude_none=True
+            path_params, query_params, body_payload = _extract_proxy_payload(
+                payload, param_map
             )
             fields_name = param_map["fields"]
             requested_fields = getattr(payload, fields_name)
-
-            body_field = param_map.get("body")
-            body_payload = None
-            if body_field:
-                body_obj = getattr(payload, body_field)
-                if body_obj is not None:
-                    if isinstance(body_obj, BaseModel):
-                        body_payload = body_obj.dict(exclude_none=True, by_alias=True)
-                    elif isinstance(body_obj, dict):
-                        body_payload = body_obj
-                    else:
-                        raise HTTPException(
-                            status_code=400, detail="Request body must be an object"
-                        )
-
-            path_template = __operation.path
-            missing = [
-                name
-                for name, attr in param_map["path"].items()
-                if getattr(payload, attr) is None
-            ]
-            if missing:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Missing required path parameters: {missing}",
-                )
+            field_query_name = param_map["field_query"]
+            requested_field_query = getattr(payload, field_query_name)
+            field_query_limit_name = param_map["field_query_limit"]
+            field_query_limit = getattr(payload, field_query_limit_name)
+            discovery_id_name = param_map["discovery_id"]
+            discovery_id = getattr(payload, discovery_id_name)
 
             return await proxy.execute(
                 operation=__operation,
@@ -70,12 +51,31 @@ def create_tools_router(
                 query_params=query_params,
                 body=body_payload,
                 fields=requested_fields,
-                path_template=path_template,
+                field_query=requested_field_query,
+                field_query_limit=field_query_limit,
+                discovery_id=discovery_id,
+                path_template=__operation.path,
+            )
+
+        async def discover_endpoint(
+            payload: Any = Body(...),
+            __operation=operation,
+            __request_model=discovery_model,
+        ) -> Any:  # type: ignore[misc]
+            param_map = getattr(__request_model, "__mcp_param_map__")
+            path_params, query_params, body_payload = _extract_proxy_payload(
+                payload, param_map
+            )
+            return await proxy.discover_fields(
+                operation=__operation,
+                path_params=path_params,
+                query_params=query_params,
+                body=body_payload,
+                path_template=__operation.path,
             )
 
         request_model.model_rebuild()
         endpoint.__annotations__["payload"] = request_model
-
         router.post(
             endpoint_path,
             response_model=response_model,
@@ -84,11 +84,44 @@ def create_tools_router(
             name=operation.name,
         )(endpoint)
 
+        discovery_model.model_rebuild()
+        discover_endpoint.__annotations__["payload"] = discovery_model
+        router.post(
+            discovery_endpoint_path,
+            response_model=Dict[str, Any],
+            response_model_exclude_none=True,
+            summary=f"Discover fields for {summary}",
+            name=f"{operation.name}__discover_fields",
+        )(discover_endpoint)
+
     return router
 
 
 def build_request_model(
     operation: EndpointOperation, schema_factory: SchemaFactory
+) -> Type[BaseModel]:
+    return _build_operation_payload_model(
+        operation,
+        schema_factory,
+        include_response_controls=True,
+    )
+
+
+def build_discovery_request_model(
+    operation: EndpointOperation, schema_factory: SchemaFactory
+) -> Type[BaseModel]:
+    return _build_operation_payload_model(
+        operation,
+        schema_factory,
+        include_response_controls=False,
+    )
+
+
+def _build_operation_payload_model(
+    operation: EndpointOperation,
+    schema_factory: SchemaFactory,
+    *,
+    include_response_controls: bool,
 ) -> Type[BaseModel]:
     fields: Dict[str, Tuple[Any, Any]] = {}
     used_names: Set[str] = set()
@@ -128,19 +161,67 @@ def build_request_model(
             _field_value(default, description="JSON request body"),
         )
 
-    fields_field_name, _ = _sanitize_name("fields", used_names)
-    from typing import List as TypingList
-    from typing import Optional as TypingOptional
+    param_map: Dict[str, Any] = {
+        "path": path_map,
+        "query": query_map,
+        "body": body_field_name,
+    }
 
-    fields[fields_field_name] = (
-        TypingOptional[TypingList[str]],
-        Field(
-            default=None,
-            description="Subset of response properties to include in the result.",
-        ),
-    )
+    if include_response_controls:
+        fields_field_name, _ = _sanitize_name("fields", used_names)
+        field_query_name, _ = _sanitize_name("field_query", used_names)
+        field_query_limit_name, _ = _sanitize_name("field_query_limit", used_names)
+        discovery_id_name, _ = _sanitize_name("discovery_id", used_names)
+        from typing import List as TypingList
+        from typing import Optional as TypingOptional
 
-    model_name = f"{operation.name}_payload".replace("-", "_")
+        fields[fields_field_name] = (
+            TypingOptional[TypingList[str]],
+            Field(
+                default=None,
+                description="Subset of response properties to include in the result.",
+            ),
+        )
+        fields[field_query_name] = (
+            TypingOptional[str],
+            Field(
+                default=None,
+                description=(
+                    "Natural-language/fuzzy field query. Used only when `fields` is not provided."
+                ),
+            ),
+        )
+        fields[field_query_limit_name] = (
+            int,
+            Field(
+                default=8,
+                ge=1,
+                le=50,
+                description="Maximum number of fields selected from `field_query`.",
+            ),
+        )
+        fields[discovery_id_name] = (
+            TypingOptional[str],
+            Field(
+                default=None,
+                description=(
+                    "Cache key returned by the discovery endpoint. When provided, "
+                    "FieldFlow reuses cached payload data instead of calling the "
+                    "upstream API again."
+                ),
+            ),
+        )
+        param_map.update(
+            {
+                "fields": fields_field_name,
+                "field_query": field_query_name,
+                "field_query_limit": field_query_limit_name,
+                "discovery_id": discovery_id_name,
+            }
+        )
+
+    model_name_suffix = "payload" if include_response_controls else "discovery_payload"
+    model_name = f"{operation.name}_{model_name_suffix}".replace("-", "_")
     base_model = type(
         f"{model_name.title()}Base",
         (BaseModel,),
@@ -152,18 +233,45 @@ def build_request_model(
         __module__=__name__,
         **fields,
     )  # type: ignore[call-overload]
-    setattr(
-        request_model,
-        "__mcp_param_map__",
-        {
-            "path": path_map,
-            "query": query_map,
-            "body": body_field_name,
-            "fields": fields_field_name,
-        },
-    )
+    setattr(request_model, "__mcp_param_map__", param_map)
     request_model.model_rebuild()
     return request_model
+
+
+def _extract_proxy_payload(
+    payload: BaseModel,
+    param_map: Dict[str, Any],
+) -> Tuple[Dict[str, Any], Dict[str, Any], Optional[Dict[str, Any]]]:
+    path_params = extract_parameters(payload, param_map["path"])
+    missing = [
+        name
+        for name, attr in param_map["path"].items()
+        if getattr(payload, attr) is None
+    ]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Missing required path parameters: {missing}",
+        )
+    query_params = extract_parameters(payload, param_map["query"], exclude_none=True)
+    body_payload = _extract_body_payload(payload, param_map.get("body"))
+    return path_params, query_params, body_payload
+
+
+def _extract_body_payload(
+    payload: BaseModel,
+    body_field_name: Optional[str],
+) -> Optional[Dict[str, Any]]:
+    if not body_field_name:
+        return None
+    body_obj = getattr(payload, body_field_name)
+    if body_obj is None:
+        return None
+    if isinstance(body_obj, BaseModel):
+        return body_obj.model_dump(exclude_none=True, by_alias=True)
+    if isinstance(body_obj, dict):
+        return body_obj
+    raise HTTPException(status_code=400, detail="Request body must be an object")
 
 
 def _parameter_type_and_default(

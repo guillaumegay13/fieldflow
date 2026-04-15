@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from .auth import AuthProvider, EnvironmentAuthProvider, OpenAPISecurityProvider
 from .config import settings
+from .field_query import create_field_discovery_cache, create_field_query_resolver
 from .openapi_loader import load_spec
 from .proxy import APIProxy
 from .spec_parser import OpenAPIParser
@@ -38,6 +39,8 @@ def create_fastapi_app() -> FastAPI:
         base_url,
         auth_provider=auth_provider,
         default_auth_config=settings.auth_config,
+        field_query_resolver=create_field_query_resolver(settings.field_query_ai),
+        field_discovery_cache=create_field_discovery_cache(settings.field_discovery),
     )
     app = FastAPI(
         title="FieldFlow API",
