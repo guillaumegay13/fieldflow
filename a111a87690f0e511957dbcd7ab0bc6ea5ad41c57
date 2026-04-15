@@ -1,0 +1,27 @@
+pyproject.toml
+  4a3c5a180fd71f4c 49-51
+fieldflow/proxy.py
+  4a3c5a180fd71f4c 103,187,256-257,261
+tests/test_field_selector.py
+  4a3c5a180fd71f4c 5,87-99,108-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "a111a87690f0e511957dbcd7ab0bc6ea5ad41c57",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 187,
+      "total_deletions": 1493,
+      "accepted_lines": 178,
+      "overriden_lines": 0
+    }
+  }
+}
