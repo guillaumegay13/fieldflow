@@ -6,7 +6,6 @@ from typing import Optional
 import uvicorn
 
 
-
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="FieldFlow command line interface")
     subparsers = parser.add_subparsers(dest="command", required=True)

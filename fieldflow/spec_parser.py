@@ -124,7 +124,9 @@ class SchemaFactory:
             return type(None)
         return self._maybe_optional(Any, nullable, force_optional)
 
-    def _maybe_optional(self, type_hint: Any, nullable: bool, force_optional: bool) -> Any:
+    def _maybe_optional(
+        self, type_hint: Any, nullable: bool, force_optional: bool
+    ) -> Any:
         if nullable or force_optional:
             from typing import Optional as TypingOptional
 

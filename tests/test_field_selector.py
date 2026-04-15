@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from fieldflow import proxy as proxy_module
 from fieldflow.proxy import (
     APIProxy,
-    FieldSelectorError,
     apply_selector_tree,
     build_selector_tree,
 )
@@ -84,6 +84,19 @@ def test_root_list_selection() -> None:
     ]
 
 
+def test_root_list_selection_without_wildcard() -> None:
+    data = [
+        {"name": "Pikachu", "height": 4},
+        {"name": "Bulbasaur", "height": 7},
+    ]
+    tree = build_selector_tree(["name"])
+    filtered = apply_selector_tree(data, tree)
+    assert filtered == [
+        {"name": "Pikachu"},
+        {"name": "Bulbasaur"},
+    ]
+
+
 def test_missing_fields_return_empty_structure() -> None:
     data = {"name": "Pikachu"}
     tree = build_selector_tree(["height"])
@@ -92,8 +105,8 @@ def test_missing_fields_return_empty_structure() -> None:
 
 
 def test_invalid_selector_raises() -> None:
-    with pytest.raises(FieldSelectorError):
-        build_selector_tree(["moves[0].move"])
+    with pytest.raises(proxy_module.FieldSelectorError):
+        proxy_module.build_selector_tree(["moves[0].move"])
 
 
 def test_build_url_encodes_path_parameters() -> None:
