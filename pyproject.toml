@@ -49,6 +49,9 @@ mcp = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.black]
+target-version = ["py311", "py312"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["fieldflow*", "fieldflow_mcp*"]
