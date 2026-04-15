@@ -1,0 +1,27 @@
+.github/PULL_REQUEST_TEMPLATE.md
+  4a3c5a180fd71f4c 5-9
+.github/dependabot.yml
+  4a3c5a180fd71f4c 1-21
+.github/workflows/ci.yml
+  4a3c5a180fd71f4c 5-8,10-15,18-19,21,25,28,30-32,37,42-43,48-71,75-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "6ffc464aa5d4da0409f8d02dadf5eb94b925c5c1",
+  "prompts": {
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 149,
+      "total_deletions": 109,
+      "accepted_lines": 353,
+      "overriden_lines": 0
+    }
+  }
+}
