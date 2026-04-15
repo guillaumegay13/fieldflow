@@ -72,8 +72,12 @@ def test_parser_resolves_request_body_and_response_refs() -> None:
             "/users": {
                 "post": {
                     "operationId": "createUser",
-                    "requestBody": {"$ref": "#/components/requestBodies/CreateUserBody"},
-                    "responses": {"201": {"$ref": "#/components/responses/UserResponse"}},
+                    "requestBody": {
+                        "$ref": "#/components/requestBodies/CreateUserBody"
+                    },
+                    "responses": {
+                        "201": {"$ref": "#/components/responses/UserResponse"}
+                    },
                 }
             }
         },

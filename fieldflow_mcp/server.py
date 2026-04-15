@@ -7,7 +7,11 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 from pydantic.fields import PydanticUndefined
 
-from fieldflow.auth import AuthProvider, EnvironmentAuthProvider, OpenAPISecurityProvider
+from fieldflow.auth import (
+    AuthProvider,
+    EnvironmentAuthProvider,
+    OpenAPISecurityProvider,
+)
 from fieldflow.config import settings
 from fieldflow.openapi_loader import load_spec
 from fieldflow.proxy import APIProxy

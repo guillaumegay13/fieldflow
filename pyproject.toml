@@ -35,7 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "black>=24.3.0",
+  "black>=26.3.1,<27",
   "ruff>=0.4.0",
   "mypy>=1.10.0",
   "pytest>=7.4.0",
@@ -45,6 +45,12 @@ dev = [
 mcp = [
   "mcp>=0.1.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.black]
+target-version = ["py311", "py312"]
 
 [tool.setuptools.packages.find]
 where = ["."]

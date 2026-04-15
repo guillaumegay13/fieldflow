@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-
 try:
     import yaml  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - yaml is optional

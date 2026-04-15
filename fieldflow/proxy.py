@@ -100,10 +100,7 @@ class APIProxy:
                 f"Content preview: {preview}"
             )
             logger.error(error_detail)
-            raise HTTPException(
-                status_code=502,
-                detail=error_detail
-            ) from exc
+            raise HTTPException(status_code=502, detail=error_detail) from exc
         if selector_tree is None:
             return data
         return self._filter_fields(data, selector_tree)
@@ -187,7 +184,7 @@ def _tokenize_selector(selector: str) -> List[Token]:
         while idx < length:
             char = part[idx]
             if char == "[":
-                if part[idx: idx + 2] != "[]":
+                if part[idx : idx + 2] != "[]":
                     raise FieldSelectorError(
                         f"Only '[]' list selectors are supported ('{selector}')."
                     )
@@ -256,11 +253,12 @@ def apply_selector_tree(data: Any, node: FieldSelectorNode) -> Any:
     if isinstance(data, list):
         if node.include_self:
             return data
-        if node.all_items is None:
+        item_node = node.all_items if node.all_items is not None else node
+        if item_node is node and not node.keys:
             return _MISSING
         filtered_items: List[Any] = []
         for item in data:
-            filtered = apply_selector_tree(item, node.all_items)
+            filtered = apply_selector_tree(item, item_node)
             if filtered is _MISSING:
                 continue
             filtered_items.append(filtered)

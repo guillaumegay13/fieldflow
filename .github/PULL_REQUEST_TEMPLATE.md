@@ -2,8 +2,11 @@
 Describe the changes in this pull request.
 
 ## Testing
-- [ ] `uvicorn app.main:app --reload`
-- [ ] Additional commands (please list)
+- [ ] `pytest`
+- [ ] `ruff check fieldflow fieldflow_mcp tests`
+- [ ] `black --check fieldflow fieldflow_mcp tests`
+- [ ] `mypy fieldflow fieldflow_mcp`
+- [ ] Additional commands or manual checks (please list)
 
 ## Checklist
 - [ ] Documentation updated (README, examples, etc.)
