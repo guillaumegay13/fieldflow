@@ -183,6 +183,90 @@ fieldflow serve-http --host 127.0.0.1 --port 8000
 fieldflow-mcp
 ```
 
+### Reduce Noisy CLI Output (`fieldflow-cli`)
+
+`fieldflow-cli` wraps any JSON-emitting CLI (`gh`, `gcloud`, `kubectl`, `aws`,
+…) and returns only the fields you project. The wrapped command runs once,
+but the model only ever sees the reduced payload — which is how you keep
+noisy `list` / `get` / `describe` / `logs` output out of your context window.
+
+**Example — open PRs on a GitHub repo:**
+
+```bash
+# 1. Inspect the shape (writes a compact manifest to .fieldflow/inspect/)
+fieldflow-cli inspect -- \
+  gh pr list --repo mnfst/manifest --state open \
+    --json number,title,author,createdAt,isDraft,additions,deletions,changedFiles,labels,body \
+    --limit 100
+
+# 2. Re-run with just the fields you actually need
+fieldflow-cli \
+  --field "[].number" \
+  --field "[].title" \
+  --field "[].author.login" \
+  --field "[].createdAt" \
+  --field "[].isDraft" \
+  --field "[].additions" \
+  --field "[].deletions" \
+  --field "[].changedFiles" \
+  --field "[].labels[].name" \
+  -- \
+  gh pr list --repo mnfst/manifest --state open \
+    --json number,title,author,createdAt,isDraft,additions,deletions,changedFiles,labels,body \
+    --limit 100
+```
+
+On a real run against `mnfst/manifest` (26 open PRs), this dropped the
+payload from **23,722 tokens to 2,779** — an **88% reduction**, mostly by
+stripping PR `body` markdown.
+
+**Example — Cloud Run error logs:**
+
+```bash
+fieldflow-cli \
+  --field "[].timestamp" \
+  --field "[].severity" \
+  --field "[].httpRequest.requestUrl" \
+  --field "[].jsonPayload.message" \
+  --max-items 25 \
+  -- \
+  gcloud logging read \
+    'resource.type="cloud_run_revision" AND severity>=ERROR' \
+    --project=my-project --freshness=24h --limit=2000 --format=json
+```
+
+The wrapped command must already support JSON output (`gh --json …`,
+`gcloud --format=json`, `kubectl -o json`, `aws --output json`). If the
+projection is too narrow, broaden it and rerun. The older
+`fieldflow run-cli …` form still works, but `fieldflow-cli …` is the
+intended direct wrapper.
+
+### Claude Code Skill (one-step install)
+
+This repo ships a Claude Code skill that teaches the agent **when** to reach
+for `fieldflow-cli` automatically — on noisy `gh`, `gcloud`, `kubectl`, `aws`
+commands, but not on trivial local ones. Install it with a symlink so it
+stays in sync with the repo:
+
+```bash
+mkdir -p ~/.claude/skills
+ln -s "$(pwd)/.agents/skills/fieldflow-cli" ~/.claude/skills/fieldflow-cli
+```
+
+Or copy it if you prefer a snapshot:
+
+```bash
+cp -r .agents/skills/fieldflow-cli ~/.claude/skills/
+```
+
+That's it — next time Claude Code starts, the `fieldflow-cli` skill is
+available and will be invoked on qualifying JSON CLI commands.
+
+The skill source lives at
+[`.agents/skills/fieldflow-cli/SKILL.md`](.agents/skills/fieldflow-cli/SKILL.md).
+An OpenAI-agent variant is also provided under
+[`.agents/skills/fieldflow-cli/agents/openai.yaml`](.agents/skills/fieldflow-cli/agents/openai.yaml).
+
 ## Testing
 
 Install the development dependencies and run the same checks used in CI:
