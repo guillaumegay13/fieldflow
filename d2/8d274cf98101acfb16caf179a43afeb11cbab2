@@ -1,0 +1,62 @@
+README.md
+  322bbfce4a8a440a 186-268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "d28d274cf98101acfb16caf179a43afeb11cbab2",
+  "prompts": {
+    "322bbfce4a8a440a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e749ee-b1a8-4fb0-98c1-9f2de087a2c0",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 66,
+      "total_deletions": 26,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    },
+    "4a3c5a180fd71f4c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d900b-66a0-7721-93fe-98841a9b5a59",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 43,
+      "total_deletions": 0,
+      "accepted_lines": 43,
+      "overriden_lines": 0
+    },
+    "aae0098e676e7d11": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019db573-7a3f-76b2-93bf-24a75de9476e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 296,
+      "total_deletions": 0,
+      "accepted_lines": 296,
+      "overriden_lines": 0
+    },
+    "db88973184f65067": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9693-ee0a-7241-b360-bc392496badf",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 785,
+      "total_deletions": 16,
+      "accepted_lines": 626,
+      "overriden_lines": 20
+    }
+  }
+}
