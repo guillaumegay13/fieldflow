@@ -1,0 +1,82 @@
+.gitignore
+  8955e03dbd2253c3 8
+fieldflow/cli.py
+  db88973184f65067 4-5,10-89,108-129,143-144,150-160
+  322bbfce4a8a440a 145-146,161-162
+fieldflow/cli_runner.py
+  db88973184f65067 1-256
+fieldflow/__init__.py
+  db88973184f65067 6-11
+  322bbfce4a8a440a 12
+fieldflow/proxy.py
+  8955e03dbd2253c3 116,263-278
+pyproject.toml
+  8955e03dbd2253c3 61
+tests/test_cli.py
+  db88973184f65067 1-208
+scripts/demo_manifest_gh.sh
+  aae0098e676e7d11 1-296
+.agents/skills/fieldflow-cli/agents/openai.yaml
+  db88973184f65067 1-4
+.agents/skills/fieldflow-cli/SKILL.md
+  8955e03dbd2253c3 1-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "f9233a1c1f5b196f2f3cfc74b54e2365e075d4c4",
+  "prompts": {
+    "322bbfce4a8a440a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e749ee-b1a8-4fb0-98c1-9f2de087a2c0",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    },
+    "8955e03dbd2253c3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "865e90ed-5e70-479b-90de-3e3a612b3541",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 129,
+      "total_deletions": 8,
+      "accepted_lines": 129,
+      "overriden_lines": 0
+    },
+    "aae0098e676e7d11": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019db573-7a3f-76b2-93bf-24a75de9476e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 296,
+      "overriden_lines": 0
+    },
+    "db88973184f65067": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9693-ee0a-7241-b360-bc392496badf",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 646,
+      "overriden_lines": 0
+    }
+  }
+}
