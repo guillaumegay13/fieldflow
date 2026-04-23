@@ -113,14 +113,7 @@ class APIProxy:
         return url
 
     def _filter_fields(self, data: Any, selector_tree: "FieldSelectorTree") -> Any:
-        filtered = apply_selector_tree(data, selector_tree)
-        if filtered is _MISSING:
-            if isinstance(data, dict):
-                return {}
-            if isinstance(data, list):
-                return []
-            return None
-        return filtered
+        return filter_with_selector_tree(data, selector_tree)
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -267,3 +260,19 @@ def apply_selector_tree(data: Any, node: FieldSelectorNode) -> Any:
     if node.include_self:
         return data
     return _MISSING
+
+
+def filter_with_selector_tree(data: Any, selector_tree: FieldSelectorTree) -> Any:
+    filtered = apply_selector_tree(data, selector_tree)
+    if filtered is _MISSING:
+        if isinstance(data, dict):
+            return {}
+        if isinstance(data, list):
+            return []
+        return None
+    return filtered
+
+
+def filter_data_fields(data: Any, fields: List[str]) -> Any:
+    selector_tree = build_selector_tree(fields)
+    return filter_with_selector_tree(data, selector_tree)

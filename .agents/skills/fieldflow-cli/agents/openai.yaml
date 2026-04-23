@@ -1,0 +1,4 @@
+interface:
+  display_name: "FieldFlow CLI"
+  short_description: "Shape noisy JSON CLI output"
+  default_prompt: "Use $fieldflow-cli to inspect a noisy JSON CLI command, choose minimal selectors, and rerun it through fieldflow-cli."

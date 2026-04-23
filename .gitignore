@@ -5,6 +5,7 @@ dist/
 .pytest_cache/
 app/__pycache__/
 .venv/
+.fieldflow/
 .DS_Store
 fieldflow_mcp/__pycache__/
 fieldflow/__pycache__/
