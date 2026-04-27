@@ -1,0 +1,31 @@
+tests/test_proxy.py
+  47997dadc2b62681 150-229
+fieldflow_mcp/proxy/init.py
+  47997dadc2b62681 1-327
+claude_config_example/skills/fieldflow-mcp-setup/SKILL.md
+  47997dadc2b62681 3,8,45-62
+fieldflow/cli.py
+  47997dadc2b62681 147-153
+fieldflow_mcp/proxy/cli.py
+  47997dadc2b62681 95-117,276-283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9c58f7d6a192f045c1c03afb30ac502bf9e50cfb",
+  "prompts": {
+    "47997dadc2b62681": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36df1d32-7fc0-4840-bd9d-50f8f2dfca99",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 470,
+      "total_deletions": 8,
+      "accepted_lines": 465,
+      "overriden_lines": 0
+    }
+  }
+}
