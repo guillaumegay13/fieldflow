@@ -144,6 +144,13 @@ def main(argv: Optional[list[str]] = None) -> None:
 
         raise SystemExit(mcp_main(argv_list[1:], prog="fieldflow mcp"))
 
+    if argv_list and argv_list[0] == "init":
+        from fieldflow_mcp.proxy.cli import main as mcp_main
+
+        # Use prog="fieldflow" so argparse renders "usage: fieldflow init …"
+        # rather than doubling the word once the "init" subcommand parses.
+        raise SystemExit(mcp_main(["init", *argv_list[1:]], prog="fieldflow"))
+
     parser = _build_parser()
     args = parser.parse_args(argv_list)
 

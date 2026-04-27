@@ -147,3 +147,83 @@ def test_filter_result_filters_lists_with_bracket_selector() -> None:
     )
     filtered = _filter_result(result, ["items[].id"])
     assert filtered.structuredContent == {"items": [{"id": 1}, {"id": 2}]}
+
+
+def test_init_safe_namespace() -> None:
+    from fieldflow_mcp.proxy.init import _safe_namespace
+
+    assert _safe_namespace("posthog") == "posthog"
+    assert _safe_namespace("PostHog") == "posthog"
+    assert _safe_namespace("gsc-server") == "gsc_server"
+    assert _safe_namespace("langfuse-docs") == "langfuse_docs"
+    assert _safe_namespace("plugin:posthog:posthog") == "plugin_posthog_posthog"
+    assert _safe_namespace("123abc").startswith("ns_")
+    assert _safe_namespace("") == "ns"
+
+
+def test_init_cc_entry_classifies_transport_and_skips_managed() -> None:
+    from fieldflow_mcp.proxy.init import CCEntry
+
+    http_entry = CCEntry(
+        name="ph",
+        scope="local",
+        config={"type": "http", "url": "https://x/mcp"},
+    )
+    assert http_entry.transport == "http"
+    assert http_entry.url == "https://x/mcp"
+    assert http_entry.is_migratable
+
+    stdio_entry = CCEntry(
+        name="local",
+        scope="user",
+        config={"command": "/bin/foo", "args": ["-x"], "env": {"K": "V"}},
+    )
+    assert stdio_entry.transport == "stdio"
+    assert stdio_entry.command == ["/bin/foo", "-x"]
+    assert stdio_entry.env == {"K": "V"}
+    assert stdio_entry.is_migratable
+
+    assert not CCEntry(name="plugin:foo", scope="local", config={}).is_migratable
+    assert not CCEntry(name="claude.ai Gmail", scope="local", config={}).is_migratable
+    assert not CCEntry(name="fieldflow", scope="local", config={}).is_migratable
+
+
+def test_init_collect_entries_dedupes_across_scopes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from fieldflow_mcp.proxy import init as init_mod
+
+    fake_cc = tmp_path / "claude.json"
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    (project_dir / ".mcp.json").write_text(
+        json.dumps(
+            {"mcpServers": {"committed": {"type": "http", "url": "https://c/mcp"}}}
+        )
+    )
+    fake_cc.write_text(
+        json.dumps(
+            {
+                "mcpServers": {"u": {"command": "/bin/u"}},
+                "projects": {
+                    str(project_dir): {
+                        "mcpServers": {
+                            "p": {"type": "http", "url": "https://p/mcp"},
+                            "plugin:skip": {"type": "http", "url": "https://x"},
+                        }
+                    }
+                },
+            }
+        )
+    )
+    monkeypatch.setattr(init_mod, "CC_CONFIG", fake_cc)
+
+    entries = init_mod._collect_entries(project_dir)
+    names = {(e.name, e.scope) for e in entries}
+    assert ("p", "local") in names  # project block under ~/.claude.json
+    assert ("u", "user") in names  # user-scope
+    assert ("committed", "project") in names  # .mcp.json
+    assert ("plugin:skip", "local") in names  # collected but not migratable
+
+    migratable = [e for e in entries if e.is_migratable]
+    assert {e.name for e in migratable} == {"p", "u", "committed"}

@@ -1,11 +1,11 @@
 ---
 name: fieldflow-mcp-setup
-description: Set up FieldFlow MCP proxy to wrap and field-filter one or more upstream MCP servers (PostHog, Supabase, etc.) so agent tool calls return only the JSON fields requested. Use when the user asks to install fieldflow, add an upstream MCP behind fieldflow, save tokens on MCP responses, register a new MCP via OAuth, or wire field filtering in front of existing MCP servers.
+description: Set up FieldFlow MCP proxy to wrap and field-filter one or more upstream MCP servers (PostHog, Supabase, etc.) so agent tool calls return only the JSON fields requested. Use when the user asks to install fieldflow, migrate existing MCPs behind fieldflow, save tokens on MCP responses, register a new MCP via OAuth, or wire field filtering in front of existing MCP servers.
 ---
 
 # FieldFlow MCP setup
 
-Walk the user through installing fieldflow, registering one or more upstream MCP servers behind it via OAuth (or stdio), and wiring the proxy into Claude Code so every namespaced tool gains a `fields` selector.
+The fastest path is `fieldflow init`, which auto-detects existing Claude Code MCPs in the current project, prompts to migrate each behind fieldflow, drives any required OAuth handshakes, and wires fieldflow into Claude Code with a single command. Lower-level commands (`add`, `remove`, `reauth`, `serve`) are below for manual setup.
 
 ## Preflight
 
@@ -42,7 +42,24 @@ Verify:
 fieldflow mcp --help
 ```
 
-## Register an upstream
+## The fast path: `fieldflow init`
+
+`cd` into the user's project, then:
+
+```bash
+fieldflow init --dry-run    # show the plan without changing anything
+fieldflow init              # interactive: prompts per upstream
+```
+
+What it does:
+1. Reads the user's existing Claude Code MCP config (`~/.claude.json` for the current project + `./.mcp.json` if present), filters out plugin-managed entries.
+2. For each remaining entry, asks `Migrate '<name>' behind fieldflow? [Y/n]`. Stdio entries are copied verbatim (command/args/env). HTTP entries trigger a browser-based OAuth handshake (one click per upstream — Claude Code's tokens cannot be reused since they live in a different keystore).
+3. Writes a backup of `~/.claude.json` to `~/.config/fieldflow/init-backup-<timestamp>.json` before any change.
+4. Removes each migrated MCP from Claude Code and registers a single `fieldflow` entry pointing at `fieldflow mcp serve`.
+
+After `init`, restart Claude Code (or run `/mcp`) to pick up the new tool list. Each upstream's tools appear as `<namespace>__<tool>` with a `fields` selector on the input schema.
+
+### Register an upstream
 
 Ask the user which upstream MCP they want first. Common HTTP+OAuth options:
 

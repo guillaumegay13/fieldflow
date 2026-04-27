@@ -92,6 +92,29 @@ def _build_parser(prog: str = "fieldflow mcp") -> argparse.ArgumentParser:
         help="Transport for the proxy itself (stdio only for now)",
     )
 
+    init_p = sub.add_parser(
+        "init",
+        help=(
+            "Set up fieldflow in this project: optionally migrate existing "
+            "MCPs behind fieldflow and register fieldflow with Claude Code"
+        ),
+    )
+    init_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show the plan without modifying anything",
+    )
+    init_p.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Migrate every detected MCP without prompting",
+    )
+    init_p.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Print OAuth URLs instead of opening a browser",
+    )
+
     return parser
 
 
@@ -250,6 +273,14 @@ def main(argv: Optional[list[str]] = None, prog: str = "fieldflow mcp") -> int:
         return _cmd_reauth(args, registry_path)
     if args.subcommand == "serve":
         return _cmd_serve(args, registry_path)
+    if args.subcommand == "init":
+        from .init import cmd_init
+
+        return cmd_init(
+            dry_run=args.dry_run,
+            non_interactive=args.non_interactive,
+            no_browser=args.no_browser,
+        )
     parser.error(f"Unknown subcommand: {args.subcommand}")
     return 2
 
