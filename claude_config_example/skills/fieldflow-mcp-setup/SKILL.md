@@ -32,9 +32,9 @@ From source (until PyPI publish or for development):
 pipx install -e '<path-to-fieldflow-checkout>[proxy]' --force
 ```
 
-Or directly from a git branch:
+Or directly from the source branch (until PyPI publish):
 ```bash
-pipx install 'fieldflow[proxy] @ git+https://github.com/<owner>/fieldflow.git@<branch>' --force
+pipx install 'fieldflow[proxy] @ git+https://github.com/guillaumegay13/fieldflow.git@feat/mcp-proxy' --force
 ```
 
 Verify:
