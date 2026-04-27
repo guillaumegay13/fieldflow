@@ -46,6 +46,11 @@ mcp = [
   "mcp>=1.27.0",
 ]
 
+proxy = [
+  "mcp>=1.27.0",
+  "keyring>=25.0.0",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

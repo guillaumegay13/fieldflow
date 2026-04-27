@@ -8,6 +8,7 @@ app/__pycache__/
 .fieldflow/
 .DS_Store
 fieldflow_mcp/__pycache__/
+fieldflow_mcp/proxy/__pycache__/
 fieldflow/__pycache__/
 tests/__pycache__/
 assets/

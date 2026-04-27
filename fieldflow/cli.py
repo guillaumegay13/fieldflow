@@ -111,6 +111,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_run_cli_arguments(run_cli_parser)
 
+    subparsers.add_parser(
+        "mcp",
+        help="Manage upstream MCP servers (add/list/remove/reauth/serve)",
+        add_help=False,
+    )
+
     return parser
 
 
@@ -131,8 +137,15 @@ def _build_inspect_cli_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[list[str]] = None) -> None:
+    argv_list = list(sys.argv[1:] if argv is None else argv)
+
+    if argv_list and argv_list[0] == "mcp":
+        from fieldflow_mcp.proxy.cli import main as mcp_main
+
+        raise SystemExit(mcp_main(argv_list[1:], prog="fieldflow mcp"))
+
     parser = _build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(argv_list)
 
     if args.command == "serve-http":
         uvicorn.run(
