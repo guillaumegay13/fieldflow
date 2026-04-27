@@ -116,14 +116,25 @@ async def _drive_oauth_handshake(
         f"Connecting to {entry.url} (a browser window will open for "
         f"authorization)…",
         file=sys.stderr,
+        flush=True,
     )
-    async with streamablehttp_client(entry.url, auth=provider) as (read, write, _):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            tools = await session.list_tools()
+
+    async def _do_handshake() -> int:
+        async with streamablehttp_client(entry.url, auth=provider) as (
+            read,
+            write,
+            _,
+        ):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                tools = await session.list_tools()
+                return len(tools.tools)
+
+    n_tools = await _do_handshake()
     print(
-        f"Authorized '{entry.namespace}'. Discovered {len(tools.tools)} upstream tool(s).",
+        f"Authorized '{entry.namespace}'. Discovered {n_tools} upstream tool(s).",
         file=sys.stderr,
+        flush=True,
     )
 
 

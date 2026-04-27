@@ -175,16 +175,16 @@ async def interactive_oauth_provider(
     callback.start()
 
     async def redirect_handler(authorization_url: str) -> None:
+        message = (
+            f"\nOpen this URL in your browser to authorize {entry.namespace}:\n"
+            f"  {authorization_url}\n"
+        )
         if open_browser:
             opened = webbrowser.open(authorization_url, new=1, autoraise=True)
             if not opened:
-                print(
-                    f"\nOpen this URL in your browser to authorize {entry.namespace}:\n  {authorization_url}\n"
-                )
+                print(message, flush=True)
         else:
-            print(
-                f"\nOpen this URL in your browser to authorize {entry.namespace}:\n  {authorization_url}\n"
-            )
+            print(message, flush=True)
 
     async def callback_handler() -> tuple[str, Optional[str]]:
         return await anyio.to_thread.run_sync(callback.wait, timeout)
