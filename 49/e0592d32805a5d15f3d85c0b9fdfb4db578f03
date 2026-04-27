@@ -1,0 +1,23 @@
+claude_config_example/skills/fieldflow-mcp-setup/SKILL.md
+  47997dadc2b62681 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "49e0592d32805a5d15f3d85c0b9fdfb4db578f03",
+  "prompts": {
+    "47997dadc2b62681": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36df1d32-7fc0-4840-bd9d-50f8f2dfca99",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay",
+      "messages": [],
+      "total_additions": 93,
+      "total_deletions": 0,
+      "accepted_lines": 93,
+      "overriden_lines": 0
+    }
+  }
+}
