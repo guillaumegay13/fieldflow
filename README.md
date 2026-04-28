@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/guillaumegay13-fieldflow-badge.png)](https://mseep.ai/app/guillaumegay13-fieldflow)
+
 # FieldFlow
 
 FieldFlow turns OpenAPI-described REST endpoints into selectively filtered tools. It generates Pydantic models and FastAPI routes that forward requests to the upstream API and return only the fields the caller asks for. An optional MCP layer exposes those generated OpenAPI tools to Model Context Protocol clients such as Claude Desktop.
