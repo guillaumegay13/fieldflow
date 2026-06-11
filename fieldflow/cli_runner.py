@@ -78,7 +78,7 @@ def inspect_json_command(
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
     payload = dict(manifest)
-    payload["manifest_path"] = str(manifest_path)
+    payload["manifest_path"] = manifest_path.as_posix()
     if stderr_preview:
         payload["stderr"] = stderr_preview
     return payload
